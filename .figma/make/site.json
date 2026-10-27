@@ -1,0 +1,10 @@
+{
+  "description": "Create and organize ideas with branching mind maps and customizable colors, helping students and teams visualize thoughts and plan projects.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

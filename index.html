@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Simulador científico de cinética química de primeira ordem">
+  <title>Kinetics Lab</title><link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brandmark">K</span><div><strong>Kinetics Lab</strong><small>Laboratório Virtual de Cinética Química</small></div></div>
+    <div class="topmeta"><span class="model">A → B · 1ª ordem</span><span class="status"><i></i>Sistema pronto</span></div>
+  </header>
+  <aside class="sidebar">
+    <nav>
+      <button class="navitem active" data-target="overview"><span>01</span>Visão geral</button>
+      <button class="navitem" data-target="simulator"><span>02</span>Simulador</button>
+      <button class="navitem" data-target="temperature"><span>03</span>Temperaturas</button>
+      <button class="navitem" data-target="theory"><span>04</span>Fundamentação</button>
+      <button class="navitem" data-target="validation"><span>05</span>Validação</button>
+    </nav>
+    <div class="reaction"><small>REAÇÃO MONITORADA</small><strong>A <b>→</b> B</strong><p>Irreversível · Volume constante</p></div>
+  </aside>
+  <main>
+    <section id="overview" class="hero">
+      <div><span class="eyebrow">SIMULAÇÃO EM TEMPO REAL</span><h1>Explore a dinâmica de uma reação química.</h1><p>Ajuste as condições experimentais e observe a influência da temperatura e da energia de ativação.</p></div>
+      <div class="equation"><span>Equação de Arrhenius</span><strong>k = A₀ · e<sup>−Ea/RT</sup></strong></div>
+    </section>
+    <section class="metrics" aria-label="Resultados principais">
+      <article><span class="metric-icon cyan">k</span><div><small>CONSTANTE DE VELOCIDADE</small><strong id="rateMetric">1,74 × 10⁻³</strong><em>s⁻¹ · rapidez da reação</em></div></article>
+      <article><span class="metric-icon violet">½</span><div><small>MEIA-VIDA</small><strong id="halfMetric">399,1</strong><em>s · consumo de 50% de A</em></div></article>
+      <article><span class="metric-icon orange">v</span><div><small>VELOCIDADE INICIAL</small><strong id="velocityMetric">1,74 × 10⁻³</strong><em>mol/(L·s) · em t = 0</em></div></article>
+      <article><span class="metric-icon green">T</span><div><small>TEMPERATURA ABSOLUTA</small><strong id="tempMetric">298,15</strong><em>K · escala termodinâmica</em></div></article>
+    </section>
+    <section id="simulator" class="workspace">
+      <article class="panel controls">
+        <div class="panelhead"><div><span class="eyebrow">PARÂMETROS</span><h2>Condições experimentais</h2></div><button id="resetBtn" class="ghost">Restaurar</button></div>
+        <form id="simulationForm">
+          <label>Temperatura <span><output id="temperatureOut">25</output> °C</span><input name="temperatureC" type="range" min="-20" max="150" step="1" value="25"></label>
+          <label>Energia de ativação <span><output id="activationOut">50</output> kJ/mol</span><input name="activationEnergyKj" type="range" min="0" max="150" step="1" value="50"></label>
+          <div class="inputgrid">
+            <label>Fator pré-exponencial<input name="preExponential" type="number" min="0.000001" step="any" value="1000000"><small>s⁻¹</small></label>
+            <label>Tempo total<input name="totalTime" type="number" min="1" step="1" value="300"><small>s</small></label>
+            <label>Concentração [A]₀<input name="initialA" type="number" min="0" step="0.01" value="1"><small>mol/L</small></label>
+            <label>Concentração [B]₀<input name="initialB" type="number" min="0" step="0.01" value="0"><small>mol/L</small></label>
+          </div>
+          <p id="formError" class="error" role="alert"></p>
+          <button class="primary" type="submit"><span>▶</span>Executar simulação</button>
+        </form>
+      </article>
+      <article class="panel chartpanel">
+        <div class="panelhead"><div><span class="eyebrow">RESULTADO</span><h2>Concentração por tempo</h2></div><div class="legend"><span class="dot cyanbg"></span>Reagente A <span class="dot orangebg"></span>Produto B</div></div>
+        <canvas id="concentrationChart"></canvas>
+      </article>
+    </section>
+    <section id="temperature" class="chartgrid">
+      <article class="panel chartpanel"><div class="panelhead"><div><span class="eyebrow">ARRHENIUS</span><h2>Comparação de temperaturas</h2></div></div><canvas id="temperatureChart"></canvas></article>
+      <article class="panel chartpanel"><div class="panelhead"><div><span class="eyebrow">LEI DE VELOCIDADE</span><h2>Velocidade instantânea</h2></div></div><canvas id="velocityChart"></canvas></article>
+    </section>
+    <section id="theory" class="theory panel">
+      <div><span class="eyebrow">FUNDAMENTAÇÃO</span><h2>Modelo cinético de primeira ordem</h2><p>Para a reação irreversível A → B, a taxa é proporcional à concentração de A. A constante k é calculada pela equação de Arrhenius com R = 8,314462618 J/(mol·K).</p></div>
+      <div class="formulae"><code>[A](t) = [A]₀e<sup>−kt</sup></code><code>[B](t) = [B]₀ + [A]₀ − [A](t)</code><code>v(t) = k[A](t)</code></div>
+    </section>
+    <section id="validation" class="validation panel"><span class="eyebrow">TESTES E VALIDAÇÃO</span><h2>Garantias do modelo</h2><div class="checks"><span>✓ Conservação de massa</span><span>✓ Limites termodinâmicos</span><span>✓ Monotonicidade</span><span>✓ Referência de Arrhenius</span></div><p>Execute <code>./test.sh</code> para rodar a suíte automatizada completa.</p></section>
+  </main>
+  <script src="/js/charts.js"></script><script src="/js/app.js"></script>
+</body>
+</html>

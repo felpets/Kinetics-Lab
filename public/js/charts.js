@@ -1,0 +1,11 @@
+window.KineticsCharts=(()=>{const palette={grid:"#213049",text:"#7f91aa",cyan:"#21d4e8",orange:"#ff8958",violet:"#9a7cff",green:"#43d6a0"};
+function setup(canvas){const dpr=devicePixelRatio||1,r=canvas.getBoundingClientRect();canvas.width=r.width*dpr;canvas.height=r.height*dpr;const c=canvas.getContext("2d");c.scale(dpr,dpr);return{c,w:r.width,h:r.height,p:{l:48,r:18,t:15,b:35}}}
+function chart(canvas,lines,xMax,yMax,yLabel){const{c,w,h,p}=setup(canvas),pw=w-p.l-p.r,ph=h-p.t-p.b;c.clearRect(0,0,w,h);c.font="10px system-ui";c.fillStyle=palette.text;c.strokeStyle=palette.grid;c.lineWidth=1;
+for(let i=0;i<=4;i++){const y=p.t+ph*i/4;c.beginPath();c.moveTo(p.l,y);c.lineTo(w-p.r,y);c.stroke();const v=yMax*(1-i/4);c.fillText(v.toPrecision(2),4,y+3)}
+for(let i=0;i<=5;i++){const x=p.l+pw*i/5;c.fillText((xMax*i/5).toFixed(0),x-8,h-12)}c.fillText("tempo (s)",w/2-22,h-1);c.save();c.translate(10,h/2+25);c.rotate(-Math.PI/2);c.fillText(yLabel,0,0);c.restore();
+lines.forEach(line=>{c.strokeStyle=line.color;c.lineWidth=2.2;c.beginPath();line.values.forEach((v,i)=>{const x=p.l+(v.x/xMax)*pw,y=p.t+ph-(v.y/yMax)*ph;i?c.lineTo(x,y):c.moveTo(x,y)});c.stroke()});
+lines.forEach((line,i)=>{c.fillStyle=line.color;c.fillRect(p.l+i*125,p.t+2,8,8);c.fillStyle=palette.text;c.fillText(line.label,p.l+13+i*125,p.t+10)})}
+function concentration(el,data){const ymax=Math.max(...data.series.flatMap(p=>[p.a,p.b]))||1;chart(el,[{label:"Reagente A",color:palette.cyan,values:data.series.map(p=>({x:p.t,y:p.a}))},{label:"Produto B",color:palette.orange,values:data.series.map(p=>({x:p.t,y:p.b}))}],data.series.at(-1).t,ymax,"concentração (mol/L)")}
+function temperature(el,data){const colors=[palette.violet,palette.cyan,palette.orange],lines=data.temperatureSeries.map((s,i)=>({label:`${s.temperatureC.toFixed(0)} °C`,color:colors[i],values:s.values.map(p=>({x:p.t,y:p.a}))}));chart(el,lines,lines[0].values.at(-1).x,Math.max(...lines.flatMap(l=>l.values.map(v=>v.y)))||1,"[A] (mol/L)")}
+function velocity(el,data){chart(el,[{label:"v(t)",color:palette.green,values:data.series.map(p=>({x:p.t,y:p.velocity}))}],data.series.at(-1).t,data.initialVelocity||1,"mol/(L·s)")}
+return{draw(data){concentration(document.querySelector("#concentrationChart"),data);temperature(document.querySelector("#temperatureChart"),data);velocity(document.querySelector("#velocityChart"),data)}}})();
