@@ -1,0 +1,11 @@
+{
+  "title": "Kinetics Lab",
+  "description": "Laboratório virtual e simulador científico de cinética química de primeira ordem (A → B).",
+  "robots": {
+    "index": true
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
