@@ -2,6 +2,8 @@
 
 > *Projeto Acadêmico para minha Noiva*
 
+🌐 **Versão Online:** [https://kinetics-lab-nine.vercel.app](https://kinetics-lab-nine.vercel.app)
+
 O **Kinetics Lab** é um laboratório virtual e simulador científico interativo de cinética química para reações elementares irreversíveis de primeira ordem ($A \rightarrow B$). 
 
 Permite visualizar em tempo real curvas de consumo do reagente, formação do produto, decaimento da velocidade instantânea e o impacto da variação de temperatura com base na equação de Arrhenius, renderizando gráficos vetoriais diretamente via HTML5 Canvas (sem bibliotecas externas).
@@ -94,15 +96,12 @@ Se você não tiver Node nem Java instalados no momento:
 
 ---
 
-## ☁️ Publicação / Deploy na Vercel
+## ☁️ Publicação Online (Vercel)
 
-O projeto já está configurado com tags Open Graph, metadados e scripts compatíveis com a Vercel:
+A aplicação está hospedada e disponível publicamente em:
+👉 **[https://kinetics-lab-nine.vercel.app](https://kinetics-lab-nine.vercel.app)**
 
-1. Faça login na sua conta em [vercel.com](https://vercel.com/).
-2. Clique em **Add New...** → **Project**.
-3. Selecione o repositório **`Kinetics-Lab`** do seu GitHub.
-4. O framework **Vite** será detectado automaticamente.
-5. Clique em **Deploy**.
+O projeto já está configurado com tags Open Graph (para pré-visualização no WhatsApp/redes sociais), metadados e scripts otimizados para a Vercel. Qualquer novo push na branch `main` gera uma nova versão automaticamente.
 
 ---
 
@@ -144,3 +143,23 @@ O modelo calcula o comportamento da reação $A \rightarrow B$ sob as seguintes 
 ├── run.bat / run.sh       # Compiladores e inicializadores do servidor Java
 └── test.bat / test.sh     # Executores dos testes matemáticos em Java
 ```
+
+## 📂 Estrutura do Projeto
+
+```text
+├── public/                # Interface web, estilos e renderização em Canvas
+│   ├── css/styles.css     # Estilos visuais (dark mode científico)
+│   ├── js/app.js          # Lógica do formulário, métricas e fallback local
+│   ├── js/charts.js       # Motor gráfico vetorial nativo em Canvas
+│   └── index.html         # Página da aplicação
+├── src/                   # Backend em Java puro (sem frameworks pesados)
+│   ├── Main.java          # Servidor HTTP nativo e roteador de endpoints
+│   ├── ReactionModel.java # Fórmulas e cálculos físico-químicos
+│   ├── SimulationService  # Amostragem das curvas e cenários térmicos
+│   ├── Json.java          # Parser e formatador JSON próprio
+│   └── ValidationTests    # Suíte de testes automatizados do modelo
+├── dev.bat / dev.sh       # Inicializadores do ambiente Web (Node/Vite)
+├── run.bat / run.sh       # Compiladores e inicializadores do servidor Java
+└── test.bat / test.sh     # Executores dos testes matemáticos em Java
+```
+
