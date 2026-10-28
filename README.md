@@ -40,6 +40,10 @@ Você pode executar o projeto de duas formas diferentes, dependendo do que já t
 
 ## 🚀 Como Executar o Projeto
 
+
+🌐 **Versão Online:** [https://kinetics-lab-nine.vercel.app](https://kinetics-lab-nine.vercel.app)
+
+### LocalHost: 
 ### Opção 1: Modo Web com Vite (Mais fácil no Windows)
 
 Esta opção não requer Java. Toda a computação da cinética química é realizada diretamente pelo motor JavaScript do navegador.
