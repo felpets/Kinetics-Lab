@@ -10,6 +10,17 @@ Permite visualizar em tempo real curvas de consumo do reagente, formação do pr
 
 ---
 
+## 💻 Linguagens e Tecnologias Utilizadas
+
+* **☕ Java (17+)**: Backend nativo, modelagem das equações físico-químicas (`ReactionModel`), servidor HTTP embutido (`jdk.httpserver`), parser JSON próprio e suíte de testes de validação matemática.
+* **🌐 JavaScript (ES6+)**: Lógica interativa do laboratório, motor vetorial de gráficos via HTML5 Canvas e cálculo de fallback em tempo real no próprio navegador.
+* **📄 HTML5**: Estruturação semântica da aplicação e áreas de desenho para os gráficos.
+* **🎨 CSS3**: Interface responsiva e moderna com tema dark mode científico.
+* **🔷 TypeScript**: Tipagem estática e configuração de ambiente e build com o Vite.
+* **⚡ Batch (.bat) & Shell Script (.sh)**: Automação para compilação, testes e inicialização em 1 clique (para Windows, Linux e macOS).
+
+---
+
 ## 📋 Pré-requisitos
 
 Você pode executar o projeto de duas formas diferentes, dependendo do que já tem instalado:
