@@ -16,11 +16,19 @@ chmod +x run.sh test.sh
 ./run.sh
 ```
 
-### Windows
+### Windows (Java)
 
 ```bat
 test.bat
 run.bat
+```
+
+### Windows (Modo Web / Node.js)
+
+Não necessita do Java instalado:
+
+```bat
+dev.bat
 ```
 
 Abra `http://127.0.0.1:8080`. Para outra porta, defina a variável `PORT`.
