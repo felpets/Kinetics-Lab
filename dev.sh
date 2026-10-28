@@ -9,3 +9,4 @@ fi
 
 echo "Iniciando o servidor Vite e abrindo no navegador..."
 npx vite --open
+

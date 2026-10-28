@@ -23,3 +23,4 @@ echo.
 
 call npx vite --open
 pause
+
