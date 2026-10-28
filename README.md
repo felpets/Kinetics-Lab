@@ -149,22 +149,3 @@ O modelo calcula o comportamento da reação $A \rightarrow B$ sob as seguintes 
 └── test.bat / test.sh     # Executores dos testes matemáticos em Java
 ```
 
-## 📂 Estrutura do Projeto
-
-```text
-├── public/                # Interface web, estilos e renderização em Canvas
-│   ├── css/styles.css     # Estilos visuais (dark mode científico)
-│   ├── js/app.js          # Lógica do formulário, métricas e fallback local
-│   ├── js/charts.js       # Motor gráfico vetorial nativo em Canvas
-│   └── index.html         # Página da aplicação
-├── src/                   # Backend em Java puro (sem frameworks pesados)
-│   ├── Main.java          # Servidor HTTP nativo e roteador de endpoints
-│   ├── ReactionModel.java # Fórmulas e cálculos físico-químicos
-│   ├── SimulationService  # Amostragem das curvas e cenários térmicos
-│   ├── Json.java          # Parser e formatador JSON próprio
-│   └── ValidationTests    # Suíte de testes automatizados do modelo
-├── dev.bat / dev.sh       # Inicializadores do ambiente Web (Node/Vite)
-├── run.bat / run.sh       # Compiladores e inicializadores do servidor Java
-└── test.bat / test.sh     # Executores dos testes matemáticos em Java
-```
-
