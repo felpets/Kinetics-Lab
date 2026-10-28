@@ -10,13 +10,11 @@ Permite visualizar em tempo real curvas de consumo do reagente, formação do pr
 
 ## 📋 Pré-requisitos
 
-Você pode executar o projeto de duas formas diferentes, dependendo do que já tem instalado:
+Oque é preciso para iniciar o projeto em LocalHost, dependendo do que já tem instalado:
 
 | Modo de Execução | O que precisa instalado? | Vantagens |
 | :--- | :--- | :--- |
 | **Modo Web (Node.js)** ⭐ *Recomendado* | [Node.js](https://nodejs.org/) (v18+) | Inicia com 1 clique (`dev.bat`) e abre direto no navegador |
-| **Modo Completo (Java Backend)** | [JDK 17+](https://adoptium.net/temurin/releases/?version=17) | Executa o backend Java com servidor HTTP embutido e testes |
-| **Modo Direto (Navegador)** | Apenas um navegador moderno | Não requer nenhuma instalação |
 
 ---
 
@@ -28,14 +26,6 @@ Você pode executar o projeto de duas formas diferentes, dependendo do que já t
   ```powershell
   winget install OpenJS.NodeJS.LTS
   ```
-
-#### 2. Java JDK 17 (para o Modo Java)
-* **Pelo instalador:** Baixe o JDK 17 no [Adoptium Temurin](https://adoptium.net/temurin/releases/?version=17) (marque as opções *Add to PATH* e *Set JAVA_HOME*).
-* **Ou pelo terminal Windows:**
-  ```powershell
-  winget install EclipseAdoptium.Temurin.17.JDK
-  ```
-
 ---
 
 ## 🚀 Como Executar o Projeto
@@ -60,55 +50,7 @@ Esta opção não requer Java. Toda a computação da cinética química é real
    ./dev.sh
    ```
 3. O sistema abrirá em: **`http://localhost:5173`**
-
----
-
-### Opção 2: Modo Servidor Java Local
-
-Utiliza o servidor HTTP nativo do Java (`jdk.httpserver`) e o motor de simulação em Java.
-
-#### Windows:
-1. Para rodar a bateria de testes matemáticos:
-   ```bat
-   test.bat
-   ```
-2. Para compilar e iniciar o servidor:
-   ```bat
-   run.bat
-   ```
-3. Acesse no navegador: **`http://127.0.0.1:8080`**
-
-#### Linux e macOS:
-```bash
-chmod +x test.sh run.sh
-./test.sh
-./run.sh
-```
-
-> [!TIP]
-> Para usar outra porta no servidor Java, defina a variável `PORT` antes de executar (ex: `set PORT=3000 && run.bat`).
-
----
-
-### Opção 3: Modo Direto (Sem servidor)
-
-Se você não tiver Node nem Java instalados no momento:
-* Vá até a pasta `public/` e dê **duplo-clique no arquivo `index.html`**.
-* O laboratório funcionará normalmente no navegador.
-
----
-
-## ☁️ Publicação / Deploy na Vercel
-
-O projeto já está configurado com tags Open Graph, metadados e scripts compatíveis com a Vercel:
-
-1. Faça login na sua conta em [vercel.com](https://vercel.com/).
-2. Clique em **Add New...** → **Project**.
-3. Selecione o repositório **`Kinetics-Lab`** do seu GitHub.
-4. O framework **Vite** será detectado automaticamente.
-5. Clique em **Deploy**.
-
----
+   
 
 ## 🧪 Fundamentação Teórica
 
