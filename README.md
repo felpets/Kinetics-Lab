@@ -1,5 +1,7 @@
 # Kinetics Lab
 
+> *Projeto Acadêmico para minha Noiva*
+
 Simulador local de uma reação irreversível de primeira ordem `A → B`. O backend Java 17 calcula a constante de Arrhenius, concentrações, velocidade e meia-vida; a interface HTML/CSS/JavaScript renderiza três gráficos Canvas sem bibliotecas ou serviços externos.
 
 ## Executar
