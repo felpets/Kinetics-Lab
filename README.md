@@ -1,6 +1,5 @@
 # Kinetics Lab
 
-> *Projeto Acadêmico para minha Noiva*
 
 🌐 **Versão Online:** [https://kinetics-lab-nine.vercel.app](https://kinetics-lab-nine.vercel.app)
 
