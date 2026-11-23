@@ -23,7 +23,8 @@ window.KineticsCharts = (() => {
       ctx,
       w,
       h,
-      p: { l: 56, r: 24, t: 26, b: 42 }
+      // Margem esquerda ampliada para 78px para garantir que valores e título nunca colidam
+      p: { l: 78, r: 24, t: 30, b: 48 }
     };
   }
 
@@ -31,10 +32,12 @@ window.KineticsCharts = (() => {
     if (!Number.isFinite(v)) return "—";
     const abs = Math.abs(v);
     if (abs === 0) return "0";
-    if (abs < 0.001 || abs >= 10000) {
-      return v.toExponential(2).replace("e", "×10^");
+    if (abs < 0.005 || abs >= 1000) {
+      const exp = Math.floor(Math.log10(abs));
+      const mantissa = (v / Math.pow(10, exp)).toFixed(1);
+      return `${mantissa}e${exp}`;
     }
-    return abs < 1 ? v.toFixed(3) : v.toFixed(2);
+    return abs < 0.1 ? v.toFixed(3) : abs < 1 ? v.toFixed(2) : v.toFixed(1);
   }
 
   // GRÁFICO 1: PARIDADE (Observado vs Previsto)
@@ -52,7 +55,6 @@ window.KineticsCharts = (() => {
 
     // Grid e Eixos
     ctx.font = "10px Inter, sans-serif";
-    ctx.fillStyle = palette.text;
     ctx.strokeStyle = palette.grid;
     ctx.lineWidth = 1;
 
@@ -62,22 +64,38 @@ window.KineticsCharts = (() => {
       ctx.moveTo(p.l, y);
       ctx.lineTo(w - p.r, y);
       ctx.stroke();
-      ctx.fillText(formatNum((maxV * i) / 4), 6, y + 3);
+
+      // Valores no eixo Y: alinhados à direita, colados na linha do eixo sem colidir com o título
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = palette.text;
+      ctx.fillText(formatNum((maxV * i) / 4), p.l - 8, y);
 
       const x = p.l + (pw * i) / 4;
       ctx.beginPath();
       ctx.moveTo(x, p.t);
       ctx.lineTo(x, h - p.b);
       ctx.stroke();
-      ctx.fillText(formatNum((maxV * i) / 4), x - 12, h - p.b + 16);
+
+      // Valores no eixo X
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillText(formatNum((maxV * i) / 4), x, h - p.b + 8);
     }
 
-    // Títulos dos eixos
+    // Título do Eixo X (Centralizado horizontalmente na área de plotagem)
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom";
     ctx.fillStyle = "#b0c4de";
-    ctx.fillText("Velocidade Prevista v̂ (mol·L⁻¹·s⁻¹)", w / 2 - 80, h - 10);
+    ctx.font = "11px Inter, sans-serif";
+    ctx.fillText("Velocidade Prevista v̂ (mol·L⁻¹·s⁻¹)", p.l + pw / 2, h - 8);
+
+    // Título do Eixo Y (Rotacionado e isolado à esquerda, sem colisão)
     ctx.save();
-    ctx.translate(14, h / 2 + 60);
+    ctx.translate(18, p.t + ph / 2);
     ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
     ctx.fillText("Velocidade Observada v (mol·L⁻¹·s⁻¹)", 0, 0);
     ctx.restore();
 
@@ -106,13 +124,16 @@ window.KineticsCharts = (() => {
       // Rótulo do experimento
       ctx.fillStyle = "#edf6ff";
       ctx.font = "9px Inter, sans-serif";
-      ctx.fillText(`Exp ${e.id}`, cx + 8, cy - 4);
+      ctx.textAlign = "left";
+      ctx.textBaseline = "bottom";
+      ctx.fillText(`Exp ${e.id}`, cx + 8, cy - 2);
     });
 
     // Legenda no topo
     ctx.font = "10px Inter, sans-serif";
+    ctx.textAlign = "right";
     ctx.fillStyle = palette.text;
-    ctx.fillText(`R² = ${results.r2.toFixed(4)}`, w - p.r - 80, p.t - 8);
+    ctx.fillText(`R² = ${results.r2.toFixed(4)}`, w - p.r, p.t - 10);
   }
 
   // GRÁFICO 2: RESÍDUOS POR EXPERIMENTO
@@ -136,15 +157,17 @@ window.KineticsCharts = (() => {
     ctx.lineTo(w - p.r, yZero);
     ctx.stroke();
 
-    // Grid Horizontal
+    // Grid Horizontal e Valores no Eixo Y
     ctx.font = "10px Inter, sans-serif";
-    ctx.fillStyle = palette.text;
     ctx.strokeStyle = palette.grid;
     ctx.lineWidth = 1;
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = palette.text;
 
     [-maxAbsRes, 0, maxAbsRes].forEach((val, i) => {
-      const y = p.t + (ph * i) / 2;
-      ctx.fillText(formatNum(val), 6, y + 3);
+      const y = p.t + (ph * (2 - i)) / 2;
+      ctx.fillText(formatNum(val), p.l - 8, y);
     });
 
     // Eixo X e Barras/Pontos de Resíduo
@@ -169,14 +192,25 @@ window.KineticsCharts = (() => {
 
       // Rótulo Exp
       ctx.fillStyle = palette.text;
-      ctx.fillText(`Exp ${e.id}`, cx - 12, h - p.b + 16);
+      ctx.font = "10px Inter, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillText(`Exp ${e.id}`, cx, h - p.b + 8);
     });
 
-    // Título Y
-    ctx.save();
-    ctx.translate(14, h / 2 + 40);
-    ctx.rotate(-Math.PI / 2);
+    // Título do Eixo X
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom";
     ctx.fillStyle = "#b0c4de";
+    ctx.font = "11px Inter, sans-serif";
+    ctx.fillText("Experimentos Analisados", p.l + pw / 2, h - 8);
+
+    // Título do Eixo Y (Isolado à esquerda)
+    ctx.save();
+    ctx.translate(18, p.t + ph / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
     ctx.fillText("Resíduo (v_obs - v_pred)", 0, 0);
     ctx.restore();
   }
@@ -190,19 +224,16 @@ window.KineticsCharts = (() => {
 
     ctx.clearRect(0, 0, w, h);
 
-    // Amostragem das curvas teóricas de taxa com concentração normalizada de 0.1 a 2.0
     const colors = [palette.cyan, palette.orange, palette.violet];
     const steps = 60;
     const cMax = 2.0;
 
-    // Calcular valores máximos para escalar
     let maxRate = 0;
     const curves = results.reagents.map((reagent, rIdx) => {
       const order = reagent.order;
       const points = [];
       for (let s = 0; s <= steps; s++) {
         const conc = (cMax * s) / steps;
-        // Velocidade normalizada: (conc)^order
         const rate = Math.pow(Math.max(conc, 0), order);
         points.push({ conc, rate });
         if (rate > maxRate) maxRate = rate;
@@ -212,9 +243,8 @@ window.KineticsCharts = (() => {
 
     if (maxRate <= 0) maxRate = 1;
 
-    // Grid
+    // Grid e Eixos
     ctx.font = "10px Inter, sans-serif";
-    ctx.fillStyle = palette.text;
     ctx.strokeStyle = palette.grid;
     ctx.lineWidth = 1;
 
@@ -224,22 +254,38 @@ window.KineticsCharts = (() => {
       ctx.moveTo(p.l, y);
       ctx.lineTo(w - p.r, y);
       ctx.stroke();
-      ctx.fillText(((maxRate * i) / 4).toFixed(1), 16, y + 3);
+
+      // Valores Y alinhados à direita
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = palette.text;
+      ctx.fillText(((maxRate * i) / 4).toFixed(1), p.l - 8, y);
 
       const x = p.l + (pw * i) / 4;
       ctx.beginPath();
       ctx.moveTo(x, p.t);
       ctx.lineTo(x, h - p.b);
       ctx.stroke();
-      ctx.fillText(((cMax * i) / 4).toFixed(1), x - 6, h - p.b + 16);
+
+      // Valores X
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillText(((cMax * i) / 4).toFixed(1), x, h - p.b + 8);
     }
 
-    // Títulos
+    // Título do Eixo X
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom";
     ctx.fillStyle = "#b0c4de";
-    ctx.fillText("Concentração relativa do reagente (u.a.)", w / 2 - 95, h - 10);
+    ctx.font = "11px Inter, sans-serif";
+    ctx.fillText("Concentração relativa do reagente (u.a.)", p.l + pw / 2, h - 8);
+
+    // Título do Eixo Y (Isolado à esquerda)
     ctx.save();
-    ctx.translate(14, h / 2 + 50);
+    ctx.translate(18, p.t + ph / 2);
     ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
     ctx.fillText("Velocidade relativa calculada (u.a.)", 0, 0);
     ctx.restore();
 
@@ -256,12 +302,15 @@ window.KineticsCharts = (() => {
       });
       ctx.stroke();
 
-      // Legenda
-      const legX = p.l + i * 110;
+      // Legenda no topo
+      const legX = p.l + i * 115;
       ctx.fillStyle = curve.color;
-      ctx.fillRect(legX, p.t - 14, 10, 10);
+      ctx.fillRect(legX, p.t - 16, 9, 9);
       ctx.fillStyle = "#edf6ff";
-      ctx.fillText(`[${curve.reagent.name}] (ordem ${curve.reagent.order.toFixed(2)})`, legX + 14, p.t - 5);
+      ctx.font = "10px Inter, sans-serif";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      ctx.fillText(`[${curve.reagent.name}] (ordem ${curve.reagent.order.toFixed(2)})`, legX + 13, p.t - 17);
     });
   }
 
@@ -272,7 +321,8 @@ window.KineticsCharts = (() => {
       ctx.clearRect(0, 0, w, h);
       ctx.font = "12px Inter, sans-serif";
       ctx.fillStyle = palette.text;
-      ctx.fillText("Insira pelo menos 2 temperaturas para traçar Arrhenius.", w / 4, h / 2);
+      ctx.textAlign = "center";
+      ctx.fillText("Insira pelo menos 2 temperaturas para traçar Arrhenius.", w / 2, h / 2);
       return;
     }
 
@@ -282,20 +332,19 @@ window.KineticsCharts = (() => {
 
     ctx.clearRect(0, 0, w, h);
 
-    const xVals = arrheniusData.points.map(pt => pt.invT * 1000); // 1000/T
+    const xVals = arrheniusData.points.map(pt => pt.invT * 1000);
     const yVals = arrheniusData.points.map(pt => pt.lnK);
 
-    const minX = Math.min(...xVals) * 0.96;
-    const maxX = Math.max(...xVals) * 1.04;
-    const minY = Math.min(...yVals) * 1.08;
-    const maxY = Math.max(...yVals) * 0.92;
+    const minX = Math.min(...xVals) * 0.97;
+    const maxX = Math.max(...xVals) * 1.03;
+    const minY = Math.min(...yVals) * 1.05;
+    const maxY = Math.max(...yVals) * 0.95;
 
     const spanX = maxX - minX || 1;
     const spanY = maxY - minY || 1;
 
-    // Grid
+    // Grid e Eixos
     ctx.font = "10px Inter, sans-serif";
-    ctx.fillStyle = palette.text;
     ctx.strokeStyle = palette.grid;
     ctx.lineWidth = 1;
 
@@ -305,22 +354,38 @@ window.KineticsCharts = (() => {
       ctx.moveTo(p.l, y);
       ctx.lineTo(w - p.r, y);
       ctx.stroke();
-      ctx.fillText((minY + (spanY * i) / 4).toFixed(2), 10, y + 3);
+
+      // Valores Y alinhados à direita
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = palette.text;
+      ctx.fillText((minY + (spanY * i) / 4).toFixed(2), p.l - 8, y);
 
       const x = p.l + (pw * i) / 4;
       ctx.beginPath();
       ctx.moveTo(x, p.t);
       ctx.lineTo(x, h - p.b);
       ctx.stroke();
-      ctx.fillText((minX + (spanX * i) / 4).toFixed(2), x - 10, h - p.b + 16);
+
+      // Valores X
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillText((minX + (spanX * i) / 4).toFixed(2), x, h - p.b + 8);
     }
 
-    // Títulos
+    // Título do Eixo X
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom";
     ctx.fillStyle = "#b0c4de";
-    ctx.fillText("1000 / T (K⁻¹)", w / 2 - 25, h - 10);
+    ctx.font = "11px Inter, sans-serif";
+    ctx.fillText("1000 / T (K⁻¹)", p.l + pw / 2, h - 8);
+
+    // Título do Eixo Y (Isolado à esquerda)
     ctx.save();
-    ctx.translate(14, h / 2 + 25);
+    ctx.translate(18, p.t + ph / 2);
     ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
     ctx.fillText("ln(k)", 0, 0);
     ctx.restore();
 
@@ -337,12 +402,12 @@ window.KineticsCharts = (() => {
     ctx.stroke();
 
     // Pontos experimentais
-    arrheniusData.points.forEach((pt, i) => {
+    arrheniusData.points.forEach((pt) => {
       const cx = p.l + ((pt.invT * 1000 - minX) / spanX) * pw;
       const cy = h - p.b - ((pt.lnK - minY) / spanY) * ph;
 
       ctx.beginPath();
-      ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+      ctx.arc(cx, cy, 5.5, 0, Math.PI * 2);
       ctx.fillStyle = palette.violet;
       ctx.fill();
       ctx.strokeStyle = "#fff";
@@ -351,13 +416,16 @@ window.KineticsCharts = (() => {
 
       ctx.fillStyle = "#edf6ff";
       ctx.font = "9px Inter, sans-serif";
-      ctx.fillText(`${pt.tempC}°C`, cx + 8, cy - 4);
+      ctx.textAlign = "left";
+      ctx.textBaseline = "bottom";
+      ctx.fillText(`${pt.tempC}°C`, cx + 8, cy - 2);
     });
 
     // Legenda no topo
-    ctx.fillStyle = palette.text;
     ctx.font = "10px Inter, sans-serif";
-    ctx.fillText(`Ea = ${arrheniusData.ea.toFixed(2)} kJ/mol | R² = ${arrheniusData.r2.toFixed(4)}`, p.l + 5, p.t - 8);
+    ctx.textAlign = "right";
+    ctx.fillStyle = palette.text;
+    ctx.fillText(`Ea = ${arrheniusData.ea.toFixed(2)} kJ/mol | R² = ${arrheniusData.r2.toFixed(4)}`, w - p.r, p.t - 10);
   }
 
   return {
