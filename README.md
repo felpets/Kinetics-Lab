@@ -1,176 +1,129 @@
-# Kinetics Lab
+# Desenvolvimento de um Simulador Computacional para Determinação da Lei de Velocidade e da Constante Cinética pelo Método das Velocidades Iniciais
 
 > *Projeto Acadêmico para minha Noiva*
 
-🌐 **Versão Online:** [https://kinetics-lab-nine.vercel.app](https://kinetics-lab-nine.vercel.app)
+🌐 **Versão Online Publicada:** [https://kinetics-lab-nine.vercel.app](https://kinetics-lab-nine.vercel.app)
 
-O **Kinetics Lab** é um laboratório virtual e simulador científico interativo de cinética química para reações elementares irreversíveis de primeira ordem ($A \rightarrow B$). 
+---
 
-Permite visualizar em tempo real curvas de consumo do reagente, formação do produto, decaimento da velocidade instantânea e o impacto da variação de temperatura com base na equação de Arrhenius, renderizando gráficos vetoriais diretamente via HTML5 Canvas (sem bibliotecas externas).
+## 🎯 Objetivo
+
+Desenvolver uma ferramenta computacional capaz de determinar experimentalmente a lei de velocidade e a constante cinética de uma reação química a partir das concentrações iniciais dos reagentes e das respectivas velocidades iniciais.
 
 ---
 
 ## 💻 Linguagens e Tecnologias Utilizadas
 
-* **☕ Java (17+)**: Backend nativo, modelagem das equações físico-químicas (`ReactionModel`), servidor HTTP embutido (`jdk.httpserver`), parser JSON próprio e suíte de testes de validação matemática.
-* **🌐 JavaScript (ES6+)**: Lógica interativa do laboratório, motor vetorial de gráficos via HTML5 Canvas e cálculo de fallback em tempo real no próprio navegador.
-* **📄 HTML5**: Estruturação semântica da aplicação e áreas de desenho para os gráficos.
-* **🎨 CSS3**: Interface responsiva e moderna com tema dark mode científico.
-* **🔷 TypeScript**: Tipagem estática e configuração de ambiente e build com o Vite.
-* **⚡ Batch (.bat) & Shell Script (.sh)**: Automação para compilação, testes e inicialização em 1 clique (para Windows, Linux e macOS).
+* **HTML5**: Estruturação semântica da aplicação web, tabelas de dados experimentais interativas e elementos de Canvas para os gráficos.
+* **CSS3**: Estilização visual responsiva e moderna com tema dark mode científico, hierarquia visual e compatibilidade multiplataforma (desktop, tablet e mobile).
+* **JavaScript (ES6+)**: Implementação dos algoritmos de tratamento numérico, regressão linear múltipla (solução matricial de Gauss-Jordan), análise estatística de resíduos, motor gráfico vetorial em Canvas e modelos cinéticos em tempo real.
 
 ---
 
-## 📋 Pré-requisitos
+## 🔬 Metodologia Computacional
 
-Você pode executar o projeto de duas formas diferentes, dependendo do que já tem instalado:
+O programa fundamenta-se na **lei diferencial de velocidade** para uma reação química genérica com múltiplos reagentes:
 
-| Modo de Execução | O que precisa instalado? | Vantagens |
-| :--- | :--- | :--- |
-| **Modo Web (Node.js)** ⭐ *Recomendado* | [Node.js](https://nodejs.org/) (v18+) | Inicia com 1 clique (`dev.bat`) e abre direto no navegador |
-| **Modo Completo (Java Backend)** | [JDK 17+](https://adoptium.net/temurin/releases/?version=17) | Executa o backend Java com servidor HTTP embutido e testes |
-| **Modo Direto (Navegador)** | Apenas um navegador moderno | Não requer nenhuma instalação |
+$$v_0 = k \cdot [A]_0^\alpha \cdot [B]_0^\beta \cdot [C]_0^\gamma$$
 
----
+Para determinar experimentalmente a constante cinética $k$ e as ordens parciais de reação ($\alpha, \beta, \gamma$), o simulador aplica a **transformação logarítmica neperiana**:
 
-### Como instalar os pré-requisitos (se necessário):
+$$\ln(v_0) = \ln(k) + \alpha \cdot \ln([A]_0) + \beta \cdot \ln([B]_0) + \gamma \cdot \ln([C]_0)$$
 
-#### 1. Node.js (para o Modo Web)
-* **Pelo instalador:** Baixe a versão LTS no site oficial [nodejs.org](https://nodejs.org/).
-* **Ou pelo terminal Windows:**
-  ```powershell
-  winget install OpenJS.NodeJS.LTS
-  ```
+Essa transformação lineariza o modelo não-linear, reduzindo-o a uma formulação de **Regressão Linear Múltipla**:
 
-#### 2. Java JDK 17 (para o Modo Java)
-* **Pelo instalador:** Baixe o JDK 17 no [Adoptium Temurin](https://adoptium.net/temurin/releases/?version=17) (marque as opções *Add to PATH* e *Set JAVA_HOME*).
-* **Ou pelo terminal Windows:**
-  ```powershell
-  winget install EclipseAdoptium.Temurin.17.JDK
-  ```
+$$y = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \beta_3 x_3 + \varepsilon$$
 
----
+Onde:
+* $y = \ln(v_0)$
+* $\beta_0 = \ln(k) \implies k = \exp(\beta_0)$
+* $\beta_1 = \alpha$ (ordem parcial em relação ao reagente A)
+* $\beta_2 = \beta$ (ordem parcial em relação ao reagente B)
+* $\beta_3 = \gamma$ (ordem parcial em relação ao reagente C)
+* $x_j = \ln([R_j]_0)$
 
-## 🚀 Como Executar o Projeto
+### Resolução Matricial por Mínimos Quadrados Ordinários (MQO)
 
-### Opção 1: Modo Web com Vite (Mais fácil no Windows)
+Em notação matricial:
 
-Esta opção não requer Java. Toda a computação da cinética química é realizada diretamente pelo motor JavaScript do navegador.
+$$\mathbf{y} = \mathbf{X} \boldsymbol{\beta} + \boldsymbol{\varepsilon}$$
 
-1. Dê um **duplo-clique no arquivo `dev.bat`** na raiz da pasta.  
-   *(O script instalará dependências se necessário e abrirá o navegador automaticamente).*
-2. Ou rode pelo terminal:
-   ```bash
-   # Windows
-   dev.bat
+$$\hat{\boldsymbol{\beta}} = (\mathbf{X}^T \mathbf{X})^{-1} \mathbf{X}^T \mathbf{y}$$
 
-   # Linux / macOS
-   chmod +x dev.sh
-   ./dev.sh
-   ```
-3. O sistema abrirá em: **`http://localhost:5173`**
+O simulador resolve analiticamente o sistema de equações normais via eliminação de Gauss-Jordan com pivoteamento parcial, obtendo:
+1. **Ordens parciais exatas e aproximadas** ($\alpha, \beta, \dots$) e a **ordem global da reação** ($n = \sum \alpha_j$).
+2. **Constante cinética $k$** e determinação dimensional automática de sua unidade: $(\text{mol}\cdot\text{L}^{-1})^{1-n} \cdot \text{s}^{-1}$.
+3. **Velocidades previstas pelo modelo:**
+   $$\hat{v}_{0,i} = k \cdot [A]_{0,i}^\alpha \cdot [B]_{0,i}^\beta \dots$$
+4. **Análise de Resíduos:**
+   $$e_i = v_{0,i} - \hat{v}_{0,i}, \quad \text{Erro Relativo (\%)} = \frac{|v_{0,i} - \hat{v}_{0,i}|}{v_{0,i}} \times 100$$
+5. **Métricas Estatísticas de Qualidade de Ajuste:** Coeficiente de Determinação ($R^2$), $R^2$ ajustado e Erro Quadrático Médio (RMSE).
 
 ---
 
-### Opção 2: Modo Servidor Java Local
+## 📈 Representações Gráficas Integradas
 
-Utiliza o servidor HTTP nativo do Java (`jdk.httpserver`) e o motor de simulação em Java.
+O software renderiza quatro gráficos interativos em Canvas nativo (sem bibliotecas externas pesadas):
 
-#### Windows:
-1. Para rodar a bateria de testes matemáticos:
-   ```bat
-   test.bat
-   ```
-2. Para compilar e iniciar o servidor:
-   ```bat
-   run.bat
-   ```
-3. Acesse no navegador: **`http://127.0.0.1:8080`**
+1. **Gráfico de Paridade / Ajuste ($v_{\text{observada}}$ vs. $v_{\text{prevista}}$):** Avalia a aderência do modelo frente à bissetriz ideal $1:1$ ($y = x$).
+2. **Gráfico de Resíduos por Experimento:** Diagnóstico da dispersão e homocedasticidade dos erros para cada ponto experimental.
+3. **Curvas de Sensibilidade Concentração-Velocidade:** Visualização do impacto individual de cada reagente na taxa reacional em função de sua ordem parcial.
+4. **Linearização de Arrhenius ($\ln(k)$ vs $1000/T$):** Determinação da Energia de Ativação ($E_a$) e do Fator Pré-Exponencial ($A_0$) a partir de conjuntos a diferentes temperaturas:
+   $$\ln(k) = \ln(A_0) - \frac{E_a}{R} \cdot \frac{1}{T}$$
 
-#### Linux e macOS:
+---
+
+## 🧪 Aplicação
+
+A ferramenta permite:
+* Estudar a influência das concentrações iniciais sobre a velocidade de reação.
+* Comparar diferentes experimentos e prever velocidades para novas concentrações.
+* Analisar a influência da temperatura por meio de conjuntos de dados experimentais independentes.
+* Carregar instantaneamente casos clássicos da literatura química:
+  * $2\,\text{NO} + \text{O}_2 \rightarrow 2\,\text{NO}_2$ (Ordem 2 em NO, 1 em $\text{O}_2$, global 3)
+  * $\text{S}_2\text{O}_8^{2-} + 3\,\text{I}^- \rightarrow 2\,\text{SO}_4^{2-} + \text{I}_3^-$ (Ordem 1 em $\text{S}_2\text{O}_8^{2-}$, 1 em $\text{I}^-$, global 2)
+  * Hidrólise de $(CH_3)_3CCl$ (Ordem 1 em $RCl$, 0 em $OH^-$, pseudo-1ª ordem)
+  * Decomposição de $N_2O_5$ (1 reagente, 1ª ordem)
+  * Reação $BrO_3^- + 5\,Br^- + 6\,H^+$ (3 reagentes, ordens 1, 1 e 2)
+
+---
+
+## 🎓 Finalidade
+
+Proporcionar uma aplicação interativa dos conceitos de cinética química, integrando fundamentação teórica, tratamento matemático de dados e programação computacional.
+
+---
+
+## 🚀 Como Executar Localmente
+
+### Opção 1: Execução em 1 clique no Windows (Recomendado)
+
+Basta dar um duplo-clique no arquivo:
+```bat
+dev.bat
+```
+*O script verificará o ambiente, iniciará o servidor local e abrirá o navegador automaticamente em `http://localhost:5173`.*
+
+### Opção 2: Pelo Terminal (Linux / macOS / Windows)
+
 ```bash
-chmod +x test.sh run.sh
-./test.sh
-./run.sh
+# Instalação das dependências do empacotador
+npm install
+
+# Inicialização do servidor de desenvolvimento
+npm run dev
 ```
 
-> [!TIP]
-> Para usar outra porta no servidor Java, defina a variável `PORT` antes de executar (ex: `set PORT=3000 && run.bat`).
+### Opção 3: Modo Direto (Sem instalação alguma)
+
+Como a aplicação é construída em **HTML, CSS e JavaScript puros**, você pode simplesmente:
+1. Abrir a pasta `public/`.
+2. Dar duplo-clique no arquivo `index.html`.
+3. O simulador funcionará completamente offline no seu navegador padrão.
 
 ---
 
-### Opção 3: Modo Direto (Sem servidor)
+## ☁️ Acesso Online
 
-Se você não tiver Node nem Java instalados no momento:
-* Vá até a pasta `public/` e dê **duplo-clique no arquivo `index.html`**.
-* O laboratório funcionará normalmente no navegador.
-
----
-
-## ☁️ Publicação Online (Vercel)
-
-A aplicação está hospedada e disponível publicamente em:
+O projeto está configurado para deploy contínuo na Vercel e pode ser acessado publicamente em:
 👉 **[https://kinetics-lab-nine.vercel.app](https://kinetics-lab-nine.vercel.app)**
-
-O projeto já está configurado com tags Open Graph (para pré-visualização no WhatsApp/redes sociais), metadados e scripts otimizados para a Vercel. Qualquer novo push na branch `main` gera uma nova versão automaticamente.
-
----
-
-## 🧪 Fundamentação Teórica
-
-O modelo calcula o comportamento da reação $A \rightarrow B$ sob as seguintes formulações:
-
-* **Constante de Velocidade (Arrhenius):**
-  $$k = A_0 \cdot \exp\left(-\frac{E_a}{R \cdot T}\right)$$
-  *(sendo $R = 8{,}314462618\ \text{J/(mol}\cdot\text{K)}$ e $T$ em Kelvin).*
-* **Concentração do Reagente:**
-  $$[A](t) = [A]_0 \cdot \exp(-k \cdot t)$$
-* **Concentração do Produto (Conservação de Massa):**
-  $$[B](t) = [B]_0 + [A]_0 - [A](t)$$
-* **Velocidade Instantânea da Reação:**
-  $$v(t) = k \cdot [A](t)$$
-* **Tempo de Meia-Vida:**
-  $$t_{1/2} = \frac{\ln(2)}{k}$$
-
-*Premissas do modelo:* mistura ideal, volume e temperatura constantes, reação elementar irreversível e estequiometria 1:1.
-
----
-
-## 📂 Estrutura do Projeto
-
-```text
-├── public/                # Interface web, estilos e renderização em Canvas
-│   ├── css/styles.css     # Estilos visuais (dark mode científico)
-│   ├── js/app.js          # Lógica do formulário, métricas e fallback local
-│   ├── js/charts.js       # Motor gráfico vetorial nativo em Canvas
-│   └── index.html         # Página da aplicação
-├── src/                   # Backend em Java puro (sem frameworks pesados)
-│   ├── Main.java          # Servidor HTTP nativo e roteador de endpoints
-│   ├── ReactionModel.java # Fórmulas e cálculos físico-químicos
-│   ├── SimulationService  # Amostragem das curvas e cenários térmicos
-│   ├── Json.java          # Parser e formatador JSON próprio
-│   └── ValidationTests    # Suíte de testes automatizados do modelo
-├── dev.bat / dev.sh       # Inicializadores do ambiente Web (Node/Vite)
-├── run.bat / run.sh       # Compiladores e inicializadores do servidor Java
-└── test.bat / test.sh     # Executores dos testes matemáticos em Java
-```
-
-## 📂 Estrutura do Projeto
-
-```text
-├── public/                # Interface web, estilos e renderização em Canvas
-│   ├── css/styles.css     # Estilos visuais (dark mode científico)
-│   ├── js/app.js          # Lógica do formulário, métricas e fallback local
-│   ├── js/charts.js       # Motor gráfico vetorial nativo em Canvas
-│   └── index.html         # Página da aplicação
-├── src/                   # Backend em Java puro (sem frameworks pesados)
-│   ├── Main.java          # Servidor HTTP nativo e roteador de endpoints
-│   ├── ReactionModel.java # Fórmulas e cálculos físico-químicos
-│   ├── SimulationService  # Amostragem das curvas e cenários térmicos
-│   ├── Json.java          # Parser e formatador JSON próprio
-│   └── ValidationTests    # Suíte de testes automatizados do modelo
-├── dev.bat / dev.sh       # Inicializadores do ambiente Web (Node/Vite)
-├── run.bat / run.sh       # Compiladores e inicializadores do servidor Java
-└── test.bat / test.sh     # Executores dos testes matemáticos em Java
-```
-

@@ -1,73 +1,315 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="Simulador científico de cinética química de primeira ordem (A → B)">
-  <meta property="og:title" content="Kinetics Lab">
-  <meta property="og:description" content="Laboratório virtual e simulador científico de cinética química de primeira ordem (A → B).">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Desenvolvimento de um Simulador Computacional para Determinação da Lei de Velocidade e da Constante Cinética pelo Método das Velocidades Iniciais">
+  <meta property="og:title" content="Kinetics Lab - Simulador de Cinética Química">
+  <meta property="og:description" content="Determinação experimental da lei de velocidade e da constante cinética pelo Método das Velocidades Iniciais via Regressão Linear Múltipla.">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="Kinetics Lab">
-  <meta name="twitter:description" content="Laboratório virtual e simulador científico de cinética química de primeira ordem (A → B).">
-  <title>Kinetics Lab</title><link rel="stylesheet" href="/css/styles.css">
+  <meta name="twitter:title" content="Kinetics Lab - Simulador de Cinética Química">
+  <meta name="twitter:description" content="Determinação experimental da lei de velocidade e constante cinética pelo Método das Velocidades Iniciais via Regressão Linear Múltipla.">
+  <title>Simulador de Cinética Química | Método das Velocidades Iniciais</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="icon" href="/favicon.svg">
 </head>
 <body>
+  <!-- BARRA SUPERIOR -->
   <header class="topbar">
-    <div class="brand"><span class="brandmark">K</span><div><strong>Kinetics Lab</strong><small>Laboratório Virtual de Cinética Química</small></div></div>
-    <div class="topmeta"><span class="model">A → B · 1ª ordem</span><span class="status"><i></i>Sistema pronto</span></div>
+    <div class="brand">
+      <span class="brandmark">K</span>
+      <div>
+        <strong>Kinetics Lab</strong>
+        <small>Simulador Computacional de Cinética Química</small>
+      </div>
+    </div>
+    <div class="topmeta">
+      <span class="model-badge">Método das Velocidades Iniciais</span>
+      <span class="status"><i></i>Regressão Linear Múltipla</span>
+    </div>
   </header>
+
+  <!-- BARRA LATERAL -->
   <aside class="sidebar">
     <nav>
-      <button class="navitem active" data-target="overview"><span>01</span>Visão geral</button>
-      <button class="navitem" data-target="simulator"><span>02</span>Simulador</button>
-      <button class="navitem" data-target="temperature"><span>03</span>Temperaturas</button>
-      <button class="navitem" data-target="theory"><span>04</span>Fundamentação</button>
-      <button class="navitem" data-target="validation"><span>05</span>Validação</button>
+      <button class="navitem active" data-target="overview"><span>01</span>Visão Geral</button>
+      <button class="navitem" data-target="experiments"><span>02</span>Experimentos</button>
+      <button class="navitem" data-target="results"><span>03</span>Lei & Resíduos</button>
+      <button class="navitem" data-target="charts"><span>04</span>Gráficos</button>
+      <button class="navitem" data-target="theory"><span>05</span>Fundamentação</button>
     </nav>
-    <div class="reaction"><small>REAÇÃO MONITORADA</small><strong>A <b>→</b> B</strong><p>Irreversível · Volume constante</p></div>
+    <div class="sidebar-footer">
+      <small>MODELO MATEMÁTICO</small>
+      <strong>v = k · [A]<sup>α</sup> [B]<sup>β</sup></strong>
+      <p>Transformação logarítmica e MQO multivariado.</p>
+    </div>
   </aside>
+
+  <!-- CONTEÚDO PRINCIPAL -->
   <main>
+    <!-- SEÇÃO 1: VISÃO GERAL -->
     <section id="overview" class="hero">
-      <div><span class="eyebrow">SIMULAÇÃO EM TEMPO REAL</span><h1>Explore a dinâmica de uma reação química.</h1><p>Ajuste as condições experimentais e observe a influência da temperatura e da energia de ativação.</p></div>
-      <div class="equation"><span>Equação de Arrhenius</span><strong>k = A₀ · e<sup>−Ea/RT</sup></strong></div>
+      <div>
+        <span class="eyebrow">CINÉTICA QUÍMICA COMPUTACIONAL</span>
+        <h1>Determinação da Lei de Velocidade e Constante Cinética</h1>
+        <p>
+          Ferramenta computacional para estimar experimentalmente a lei de velocidade e a constante cinética 
+          pelo <strong>Método das Velocidades Iniciais</strong>, utilizando <strong>Regressão Linear Múltipla</strong> com transformação logarítmica, análise de resíduos e correlação de Arrhenius.
+        </p>
+      </div>
+      <div class="equation-box">
+        <span>Transformação Logarítmica</span>
+        <strong>ln(v₀) = ln(k) + Σ αᵢ ln([Rᵢ]₀)</strong>
+      </div>
     </section>
-    <section class="metrics" aria-label="Resultados principais">
-      <article><span class="metric-icon cyan">k</span><div><small>CONSTANTE DE VELOCIDADE</small><strong id="rateMetric">1,74 × 10⁻³</strong><em>s⁻¹ · rapidez da reação</em></div></article>
-      <article><span class="metric-icon violet">½</span><div><small>MEIA-VIDA</small><strong id="halfMetric">399,1</strong><em>s · consumo de 50% de A</em></div></article>
-      <article><span class="metric-icon orange">v</span><div><small>VELOCIDADE INICIAL</small><strong id="velocityMetric">1,74 × 10⁻³</strong><em>mol/(L·s) · em t = 0</em></div></article>
-      <article><span class="metric-icon green">T</span><div><small>TEMPERATURA ABSOLUTA</small><strong id="tempMetric">298,15</strong><em>K · escala termodinâmica</em></div></article>
+
+    <!-- CARDS DE MÉTRICAS -->
+    <section class="metrics" aria-label="Resultados principais da regressão">
+      <article>
+        <span class="metric-icon cyan">k</span>
+        <div>
+          <small>CONSTANTE CINÉTICA (k)</small>
+          <strong id="metricK">—</strong>
+          <em id="metricKUnit">mol·L⁻¹·s⁻¹</em>
+        </div>
+      </article>
+      <article>
+        <span class="metric-icon orange">n</span>
+        <div>
+          <small>ORDEM GLOBAL DA REAÇÃO</small>
+          <strong id="metricOrder">—</strong>
+          <em id="metricOrderSub">Σ ordens parciais</em>
+        </div>
+      </article>
+      <article>
+        <span class="metric-icon green">R²</span>
+        <div>
+          <small>COEFICIENTE DE AJUSTE (R²)</small>
+          <strong id="metricR2">—</strong>
+          <em>qualidade da regressão linear</em>
+        </div>
+      </article>
+      <article>
+        <span class="metric-icon violet">σ</span>
+        <div>
+          <small>ERRO QUADRÁTICO MÉDIO (RMSE)</small>
+          <strong id="metricRmse">—</strong>
+          <em>dispersão dos resíduos</em>
+        </div>
+      </article>
     </section>
-    <section id="simulator" class="workspace">
-      <article class="panel controls">
-        <div class="panelhead"><div><span class="eyebrow">PARÂMETROS</span><h2>Condições experimentais</h2></div><button id="resetBtn" class="ghost">Restaurar</button></div>
-        <form id="simulationForm">
-          <label>Temperatura <span><output id="temperatureOut">25</output> °C</span><input name="temperatureC" type="range" min="-20" max="150" step="1" value="25"></label>
-          <label>Energia de ativação <span><output id="activationOut">50</output> kJ/mol</span><input name="activationEnergyKj" type="range" min="0" max="150" step="1" value="50"></label>
-          <div class="inputgrid">
-            <label>Fator pré-exponencial<input name="preExponential" type="number" min="0.000001" step="any" value="1000000"><small>s⁻¹</small></label>
-            <label>Tempo total<input name="totalTime" type="number" min="1" step="1" value="300"><small>s</small></label>
-            <label>Concentração [A]₀<input name="initialA" type="number" min="0" step="0.01" value="1"><small>mol/L</small></label>
-            <label>Concentração [B]₀<input name="initialB" type="number" min="0" step="0.01" value="0"><small>mol/L</small></label>
+
+    <!-- SEÇÃO 2: EXPERIMENTOS E TABELA DE ENTRADA -->
+    <section id="experiments" class="panel">
+      <div class="panelhead">
+        <div>
+          <span class="eyebrow">DADOS EXPERIMENTAIS</span>
+          <h2>Método das Velocidades Iniciais</h2>
+        </div>
+        <div class="actions">
+          <button id="addExpBtn" class="btn btn-sm">＋ Adicionar Linha</button>
+          <button id="runRegressionBtn" class="btn btn-primary btn-sm">▶ Calcular Regressão</button>
+        </div>
+      </div>
+      <div class="panelbody">
+        <!-- BARRA DE PRESETS -->
+        <div class="preset-bar">
+          <span class="preset-label">Experimentos clássicos:</span>
+          <button class="preset-pill active" data-preset="no_o2">2 NO + O₂ → 2 NO₂</button>
+          <button class="preset-pill" data-preset="s2o8_i">S₂O₈²⁻ + 3 I⁻</button>
+          <button class="preset-pill" data-preset="tbutyl">(CH₃)₃CCl + OH⁻</button>
+          <button class="preset-pill" data-preset="n2o5">N₂O₅ (1 Reagente)</button>
+          <button class="preset-pill" data-preset="bro3_br_h">BrO₃⁻ + Br⁻ + H⁺ (3 Reagentes)</button>
+        </div>
+
+        <!-- TABELA DE ENTRADA -->
+        <div class="table-wrapper">
+          <table class="kinetics-table">
+            <thead id="experimentsThead"></thead>
+            <tbody id="experimentsTbody"></tbody>
+          </table>
+        </div>
+
+        <div class="table-actions">
+          <div class="reagents-select">
+            <span>Reagentes na reação:</span>
+            <select id="reagentsCountSelect">
+              <option value="1">1 Reagente (A)</option>
+              <option value="2" selected>2 Reagentes (A e B)</option>
+              <option value="3">3 Reagentes (A, B e C)</option>
+            </select>
           </div>
-          <p id="formError" class="error" role="alert"></p>
-          <button class="primary" type="submit"><span>▶</span>Executar simulação</button>
-        </form>
-      </article>
-      <article class="panel chartpanel">
-        <div class="panelhead"><div><span class="eyebrow">RESULTADO</span><h2>Concentração por tempo</h2></div><div class="legend"><span class="dot cyanbg"></span>Reagente A <span class="dot orangebg"></span>Produto B</div></div>
-        <canvas id="concentrationChart"></canvas>
-      </article>
+          <p id="regressionError" class="error" role="alert" style="margin: 0; color: var(--danger); font-size: 12px;"></p>
+        </div>
+      </div>
     </section>
-    <section id="temperature" class="chartgrid">
-      <article class="panel chartpanel"><div class="panelhead"><div><span class="eyebrow">ARRHENIUS</span><h2>Comparação de temperaturas</h2></div></div><canvas id="temperatureChart"></canvas></article>
-      <article class="panel chartpanel"><div class="panelhead"><div><span class="eyebrow">LEI DE VELOCIDADE</span><h2>Velocidade instantânea</h2></div></div><canvas id="velocityChart"></canvas></article>
+
+    <!-- SEÇÃO 3: RESULTADOS DA LEI DE VELOCIDADE E RESÍDUOS -->
+    <section id="results" class="panel">
+      <div class="panelhead">
+        <div>
+          <span class="eyebrow">MODELO AJUSTADO</span>
+          <h2>Equação da Lei de Velocidade e Resíduos</h2>
+        </div>
+      </div>
+      <div class="panelbody">
+        <div class="law-result-card">
+          <div class="law-title">Lei de Velocidade Determinada por Regressão Linear Múltipla</div>
+          <div class="law-equation" id="lawEquationDisplay">v = k · [A]<sup>α</sup> [B]<sup>β</sup></div>
+          <div class="law-details" id="lawDetailsDisplay"></div>
+        </div>
+
+        <!-- TABELA DE RESÍDUOS -->
+        <h3 style="font-size: 14px; margin: 20px 0 10px; color: #b7c6da;">Tabela de Resíduos e Velocidades Previstas</h3>
+        <div class="table-wrapper">
+          <table class="kinetics-table">
+            <thead>
+              <tr>
+                <th style="width: 70px;">Exp.</th>
+                <th>Concentrações Utilizadas</th>
+                <th>v Observada <small>(mol·L⁻¹·s⁻¹)</small></th>
+                <th>v Prevista (v̂) <small>(mol·L⁻¹·s⁻¹)</small></th>
+                <th>Resíduo (v - v̂)</th>
+                <th>Erro Relativo (%)</th>
+              </tr>
+            </thead>
+            <tbody id="residualsTbody"></tbody>
+          </table>
+        </div>
+      </div>
     </section>
-    <section id="theory" class="theory panel">
-      <div><span class="eyebrow">FUNDAMENTAÇÃO</span><h2>Modelo cinético de primeira ordem</h2><p>Para a reação irreversível A → B, a taxa é proporcional à concentração de A. A constante k é calculada pela equação de Arrhenius com R = 8,314462618 J/(mol·K).</p></div>
-      <div class="formulae"><code>[A](t) = [A]₀e<sup>−kt</sup></code><code>[B](t) = [B]₀ + [A]₀ − [A](t)</code><code>v(t) = k[A](t)</code></div>
+
+    <!-- SEÇÃO 4: REPRESENTAÇÕES GRÁFICAS -->
+    <section id="charts">
+      <div class="chartgrid">
+        <!-- GRÁFICO 1: PARIDADE -->
+        <article class="panel chartpanel">
+          <div class="panelhead">
+            <div>
+              <span class="eyebrow">DIAGNÓSTICO DO MODELO</span>
+              <h2>Velocidade Observada vs. Prevista</h2>
+            </div>
+            <div class="chart-legend">
+              <span><i class="dot cyanbg"></i>Pontos experimentais</span>
+              <span>--- Reta ideal 1:1</span>
+            </div>
+          </div>
+          <div class="panelbody">
+            <canvas id="parityChart"></canvas>
+          </div>
+        </article>
+
+        <!-- GRÁFICO 2: RESÍDUOS -->
+        <article class="panel chartpanel">
+          <div class="panelhead">
+            <div>
+              <span class="eyebrow">DISTRIBUIÇÃO DE ERROS</span>
+              <h2>Gráfico de Resíduos por Experimento</h2>
+            </div>
+            <div class="chart-legend">
+              <span><i class="dot cyanbg"></i>Resíduo positivo</span>
+              <span><i class="dot orangebg"></i>Resíduo negativo</span>
+            </div>
+          </div>
+          <div class="panelbody">
+            <canvas id="residualsChart"></canvas>
+          </div>
+        </article>
+      </div>
+
+      <div class="chartgrid">
+        <!-- GRÁFICO 3: SENSIBILIDADE -->
+        <article class="panel chartpanel">
+          <div class="panelhead">
+            <div>
+              <span class="eyebrow">ORDENS DE REAÇÃO</span>
+              <h2>Influência das Concentrações Iniciais</h2>
+            </div>
+          </div>
+          <div class="panelbody">
+            <canvas id="sensitivityChart"></canvas>
+          </div>
+        </article>
+
+        <!-- GRÁFICO 4: ARRHENIUS / TEMPERATURA -->
+        <article class="panel chartpanel">
+          <div class="panelhead">
+            <div>
+              <span class="eyebrow">ESTUDO TÉRMICO</span>
+              <h2>Linearização de Arrhenius (ln k vs 1000/T)</h2>
+            </div>
+          </div>
+          <div class="panelbody">
+            <canvas id="arrheniusChart"></canvas>
+            <div class="arrhenius-box">
+              <h4>Parâmetros Termodinâmicos de Arrhenius:</h4>
+              <div style="display: flex; gap: 20px; font-size: 12px; color: #a4b7ce; flex-wrap: wrap;">
+                <div>Energia de Ativação (Ea): <b id="arrheniusEa" style="color: var(--orange);">—</b></div>
+                <div>Fator Pré-exponencial (A₀): <b id="arrheniusA0" style="color: var(--violet);">—</b></div>
+                <div>R² Arrhenius: <b id="arrheniusR2" style="color: var(--green);">—</b></div>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
     </section>
-    <section id="validation" class="validation panel"><span class="eyebrow">TESTES E VALIDAÇÃO</span><h2>Garantias do modelo</h2><div class="checks"><span>✓ Conservação de massa</span><span>✓ Limites termodinâmicos</span><span>✓ Monotonicidade</span><span>✓ Referência de Arrhenius</span></div><p>Execute <code>./test.sh</code> para rodar a suíte automatizada completa.</p></section>
+
+    <!-- SEÇÃO 5: FUNDAMENTAÇÃO TEÓRICA E METODOLOGIA -->
+    <section id="theory" class="panel">
+      <div class="panelhead">
+        <div>
+          <span class="eyebrow">FUNDAMENTAÇÃO TEÓRICA E COMPUTACIONAL</span>
+          <h2>Metodologia Matemática do Sistema</h2>
+        </div>
+      </div>
+      <div class="panelbody">
+        <div class="theory-grid">
+          <div class="theory-text">
+            <h3>Método das Velocidades Iniciais</h3>
+            <p>
+              O método experimental das velocidades iniciais consiste em medir a rapidez instantânea da reação no início ($t \approx 0$), antes que ocorra decaimento expressivo das concentrações iniciais dos reagentes ou influência de produtos e reações reversas.
+            </p>
+            <p>
+              Para uma reação com reagentes $A$, $B$ e $C$, a lei diferencial toma a forma $v_0 = k [A]_0^\alpha [B]_0^\beta [C]_0^\gamma$. Aplicando a transformação logarítmica neperiana em ambos os membros:
+            </p>
+            <p style="font-family: 'Cambria Math', serif; font-size: 15px; color: var(--cyan); background: #07101f; padding: 10px 14px; border-radius: 6px; border-left: 2px solid var(--cyan);">
+              ln(v₀) = ln(k) + α·ln([A]₀) + β·ln([B]₀) + γ·ln([C]₀)
+            </p>
+            <p>
+              Essa transformação converte a equação exponencial não-linear em uma <strong>relação linear multivariada</strong>, permitindo estimar os parâmetros pelo método dos mínimos quadrados ordinários (MQO).
+            </p>
+          </div>
+
+          <div class="theory-cards">
+            <div class="math-step">
+              <small>Passo 1: Formulação Matricial</small>
+              <code>X · β = Y</code>
+              <p>Onde cada linha de X contém [1, ln([A]₀), ln([B]₀), ...] e o vetor Y contém ln(v₀).</p>
+            </div>
+            <div class="math-step">
+              <small>Passo 2: Equações Normais (MQO)</small>
+              <code>β̂ = (Xᵀ · X)⁻¹ · Xᵀ · Y</code>
+              <p>A solução analítica fornece o intercepto β₀ = ln(k) e as ordens parciais β₁, β₂, ...</p>
+            </div>
+            <div class="math-step">
+              <small>Passo 3: Determinação de k e Unidades</small>
+              <code>k = exp(β₀), [k] = (mol·L⁻¹)¹⁻ⁿ · s⁻¹</code>
+              <p>A constante é recuperada via exponencial natural e a unidade dimensional depende da ordem total n.</p>
+            </div>
+            <div class="math-step">
+              <small>Passo 4: Análise Térmica de Arrhenius</small>
+              <code>ln(k) = ln(A₀) - (Ea / R) · (1/T)</code>
+              <p>Com dados em múltiplas temperaturas, uma regressão linear secundária determina Ea e A₀.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
-  <script src="/js/charts.js"></script><script src="/js/app.js"></script>
+
+  <!-- SCRIPTS NATIVOS (HTML, CSS e JavaScript puros) -->
+  <script src="/js/charts.js"></script>
+  <script src="/js/app.js"></script>
 </body>
 </html>
