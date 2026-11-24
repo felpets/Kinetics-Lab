@@ -13,358 +13,91 @@
   <link rel="icon" href="/favicon.svg">
 </head>
 <body>
-  <!-- BARRA SUPERIOR -->
+
   <header class="topbar">
     <div class="brand">
       <span class="brandmark">K</span>
-      <div>
-        <strong>Kinetics Lab</strong>
-        <small>Laboratório Virtual de Análise Cinética Experimental</small>
-      </div>
+      <div><strong>Kinetics Lab</strong><small>Laboratório Virtual de Análise Cinética Experimental</small></div>
     </div>
-    <div class="topmeta">
-      <span class="model-badge">Diferenciação Numérica & Métodos Experimentais</span>
-      <span class="status"><i></i>Sistema Operacional</span>
-    </div>
+    <div class="topmeta"><span class="model-badge">Diferenciação numérica e velocidades iniciais</span></div>
   </header>
-
-  <!-- BARRA LATERAL (7 SEÇÕES OBRIGATÓRIAS) -->
   <aside class="sidebar">
-    <nav>
-      <button class="navitem active" data-target="overview"><span>01</span>Visão geral</button>
-      <button class="navitem" data-target="analysis"><span>02</span>Análise experimental</button>
-      <button class="navitem" data-target="modeling"><span>03</span>Modelagem cinética</button>
-      <button class="navitem" data-target="comparison"><span>04</span>Comparação de experimentos</button>
-      <button class="navitem" data-target="theory"><span>05</span>Fundamentação teórica</button>
-      <button class="navitem" data-target="validation"><span>06</span>Validação e memória de cálculo</button>
-      <button class="navitem" data-target="reports"><span>07</span>Relatórios</button>
+    <nav aria-label="Módulos">
+      <button class="navitem active" data-target="analysis" aria-current="page">Determinação experimental</button>
+      <button class="navitem" data-target="modeling">Lei de velocidade</button>
+      <button class="navitem" data-target="theory">Fundamentação teórica</button>
+      <button class="navitem" data-target="reports">Relatórios</button>
     </nav>
-    <div class="sidebar-footer">
-      <small>MODELO NUMÉRICO</small>
-      <strong>v(t) = (1/ν) · d[P]/dt</strong>
-      <p>Cinética experimental a partir de produtos, sem Arrhenius.</p>
-    </div>
+    <div class="sidebar-footer"><strong>v(t) = (1/ν) · d[P]/dt</strong></div>
   </aside>
 
-  <!-- CONTEÚDO PRINCIPAL -->
   <main>
-    <!-- SEÇÃO 1: VISÃO GERAL -->
-    <section id="overview" class="panel" style="padding: 24px; margin-bottom: 22px;">
-      <div class="hero">
-        <div>
-          <span class="eyebrow">LABORATÓRIO VIRTUAL DE CINÉTICA QUÍMICA</span>
-          <h1>Kinetics Lab — Análise Cinética Experimental</h1>
-          <p>
-            Ferramenta computacional e científica para a <strong>determinação da velocidade de reações químicas por métodos numéricos aplicados à concentração de produtos</strong> em função do tempo, integrando cálculo diferencial, ajuste de modelos integrados e análise de resíduos.
-          </p>
-        </div>
-        <div class="equation-box">
-          <span>Velocidade de Reação</span>
-          <strong>v(t) = (1/ν) · (d[P] / dt)</strong>
-        </div>
-      </div>
-
-      <!-- DASHBOARD DE INDICADORES PRINCIPAIS (SEÇÃO 5) -->
-      <h3 style="font-size: 13px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.8px; margin: 18px 0 10px;">
-        Indicadores Cinéticos Gerais do Experimento
-      </h3>
-      <div class="metrics">
-        <article>
-          <span class="metric-icon cyan">v₀</span>
-          <div>
-            <small>VELOCIDADE INICIAL</small>
-            <strong id="metricVInitial">—</strong>
-            <em id="metricVInitialUnit">mol·L⁻¹·s⁻¹</em>
-          </div>
-        </article>
-        <article>
-          <span class="metric-icon violet">v̄</span>
-          <div>
-            <small>VELOCIDADE MÉDIA GLOBAL</small>
-            <strong id="metricVGlobal">—</strong>
-            <em id="metricVGlobalUnit">mol·L⁻¹·s⁻¹</em>
-          </div>
-        </article>
-        <article>
-          <span class="metric-icon green">v▲</span>
-          <div>
-            <small>VELOCIDADE MÁXIMA</small>
-            <strong id="metricVMax">—</strong>
-            <em id="metricVMaxUnit">mol·L⁻¹·s⁻¹</em>
-          </div>
-        </article>
-        <article>
-          <span class="metric-icon orange">v▼</span>
-          <div>
-            <small>VELOCIDADE MÍNIMA</small>
-            <strong id="metricVMin">—</strong>
-            <em id="metricVMinUnit">mol·L⁻¹·s⁻¹</em>
-          </div>
-        </article>
-      </div>
-
-      <div class="metrics metrics-row2">
-        <article>
-          <span class="metric-icon yellow">ΔP</span>
-          <div>
-            <small>PRODUTO FORMADO</small>
-            <strong id="metricDeltaP">—</strong>
-            <em>variação total de [P]</em>
-          </div>
-        </article>
-        <article>
-          <span class="metric-icon cyan">Δt</span>
-          <div>
-            <small>TEMPO TOTAL</small>
-            <strong id="metricTotalTime">—</strong>
-            <em>duração do ensaio</em>
-          </div>
-        </article>
-        <article>
-          <span class="metric-icon violet">#N</span>
-          <div>
-            <small>PONTOS COLETADOS</small>
-            <strong id="metricPointCount">—</strong>
-            <em>amostragens temporais</em>
-          </div>
-        </article>
-        <article>
-          <span class="metric-icon green">n</span>
-          <div>
-            <small>ORDEM ESTIMADA</small>
-            <strong id="metricEstimatedOrder" style="font-size: 15px;">—</strong>
-            <em id="metricEstimatedR2">R² modelo integrado</em>
-          </div>
-        </article>
-        <article>
-          <span class="metric-icon orange">k</span>
-          <div>
-            <small>CONSTANTE CINÉTICA</small>
-            <strong id="metricEstimatedK" style="font-size: 14px;">—</strong>
-            <em>experimental</em>
-          </div>
-        </article>
-      </div>
-
-      <!-- WIDGET INTERATIVO: TANGENTE À CURVA DE CONCENTRAÇÃO (GRÁFICO 6) -->
-      <div class="tangent-widget">
-        <div class="tangent-header">
-          <span class="eyebrow" style="color: var(--tangent);">GRÁFICO INTERATIVO 6</span>
-          <h3>Interpretação Geométrica da Velocidade Instantânea</h3>
-          <p>Selecione um instante de tempo no controle deslizante abaixo para visualizar a reta tangente à curva de concentração e a inclinação correspondente à velocidade instantânea de formação do produto d[P]/dt.</p>
-        </div>
-
-        <div style="position: relative;">
-          <canvas id="tangentCanvas" style="height: 310px;"></canvas>
-        </div>
-
-        <div class="tangent-slider-wrap">
-          <div class="tangent-slider-label">
-            <span>Instante de Tempo Selecionado (t): <strong id="tangentSelectedTimeDisplay" style="color: var(--tangent);">20 s</strong></span>
-            <small style="color: var(--muted);">Arraste o controle ou clique diretamente sobre o gráfico para mover a reta tangente</small>
-          </div>
-          <input type="range" id="tangentTimeSlider" min="0" max="50" step="0.5" value="20">
-        </div>
-
-        <div class="tangent-readouts">
-          <div class="tangent-readout-item">
-            <small>Concentração do Produto [P]</small>
-            <strong id="tangentConcDisplay" style="color: var(--cyan);">0,2100</strong>
-            <em>mol/L</em>
-          </div>
-          <div class="tangent-readout-item">
-            <small>Velocidade Instantânea da Reação v(t)</small>
-            <strong id="tangentVInstDisplay" style="color: var(--tangent);">0,00910</strong>
-            <em>mol/(L·s)</em>
-          </div>
-          <div class="tangent-readout-item">
-            <small>Taxa de Formação d[P]/dt (Inclinação)</small>
-            <strong id="tangentSlopeDisplay" style="color: #fff;">0,00910</strong>
-            <em>mol/(L·s)</em>
-          </div>
-        </div>
-
-        <div class="tangent-formula-display" id="tangentFormulaDisplay">
-          <strong>v(t) = \frac{d[P]}{dt}</strong>
-          <p>Movimente o controle deslizante para observar a variação da inclinação da reta tangente em tempo real.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- SEÇÃO 2: ANÁLISE EXPERIMENTAL -->
     <section id="analysis" class="panel">
-      <div class="panelhead">
-        <div>
-          <span class="eyebrow">DADOS EXPERIMENTAIS</span>
-          <h2>02 — Análise Experimental e Diferenciação Numérica</h2>
-        </div>
-        <div class="actions">
-          <button id="togglePasteBoxBtn" class="btn btn-sm">📋 Colar Planilha</button>
-          <label class="btn btn-sm" style="margin: 0; cursor: pointer;">
-            📂 Importar CSV
-            <input type="file" id="csvFileInput" accept=".csv,.txt" style="display: none;">
-          </label>
-          <button id="exportDataCsvBtn" class="btn btn-sm">💾 Exportar CSV</button>
-          <button id="clearDataBtn" class="btn btn-danger btn-sm">🗑 Limpar</button>
-        </div>
-      </div>
       <div class="panelbody">
-        <!-- ÁREA PARA COLAR PLANILHA -->
-        <div id="pasteBoxWrap" class="paste-box-wrap">
-          <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-            <span style="font-size: 11px; font-weight: 700; color: var(--cyan);">Cole os dados copiados do Excel / Google Planilhas (colunas Tempo e Concentração):</span>
+        <div class="hero">
+          <div>
+            <h1>Determinação Experimental da Velocidade</h1>
+            <p>Registre a concentração do produto ao longo do tempo. O laboratório calcula as velocidades médias, instantâneas e a estimativa inicial usada para determinar a lei de velocidade.</p>
           </div>
-          <textarea id="pasteTextarea" placeholder="Exemplo:&#10;0&#9;0.00&#10;10&#9;0.12&#10;20&#9;0.21"></textarea>
-          <button id="applyPasteBtn" class="btn btn-primary btn-sm" style="margin-top: 8px;">Aplicar Dados Colados</button>
+          <div class="equation-box"><span>Velocidade da reação</span><strong>v(t) = (1/ν) · d[P]/dt</strong></div>
         </div>
 
-        <!-- PRESETS EXPERIMENTAIS -->
-        <div class="preset-bar">
-          <span class="preset-label">Exemplos Fictícios Pré-Carregados:</span>
-          <button class="preset-pill active" data-preset="acceptance">Exemplo Padrão (Critérios Seção 15)</button>
-          <button class="preset-pill" data-preset="peroxide">Decomposição de H₂O₂ (2 H₂O₂ → 2 H₂O + O₂)</button>
-          <button class="preset-pill" data-preset="ester">Hidrólise de Éster (Segunda Ordem)</button>
-          <button class="preset-pill" data-preset="nonuniform">Intervalos Irregulares (ν = 2)</button>
+        <div class="experiment-toolbar">
+          <label for="experimentSelect">Ensaio
+            <select id="experimentSelect"></select>
+          </label>
+          <button id="newExperiment" class="btn btn-primary">Novo ensaio</button>
+          <button id="deleteExperiment" class="btn btn-danger">Excluir ensaio</button>
+          <button id="referenceExample" class="btn">Carregar exemplo simulado de referência</button>
+          <button id="simulatedGroup" class="btn">Carregar conjunto simulado para regressão</button>
         </div>
-
-        <!-- CONFIGURAÇÃO DO EXPERIMENTO -->
+        <p id="dataOrigin" class="origin" role="status"></p>
         <div class="config-grid">
-          <div class="config-group">
-            <label>Nome do Experimento</label>
-            <input type="text" id="expNameInp" value="Decomposição Cinética">
-          </div>
-          <div class="config-group">
-            <label>Equação Química</label>
-            <input type="text" id="reactionEqInp" value="A → P">
-          </div>
-          <div class="config-group">
-            <label>Produto Analisado</label>
-            <input type="text" id="productNameInp" value="P">
-          </div>
-          <div class="config-group">
-            <label>Coeficiente de P (ν)</label>
-            <input type="number" id="nuInp" value="1" min="1" step="1">
-            <small>Estequiometria do produto</small>
-          </div>
-          <div class="config-group">
-            <label>Coeficiente de A (a)</label>
-            <input type="number" id="coefAInp" value="1" min="1" step="1">
-            <small>Estequiometria do reagente</small>
-          </div>
-          <div class="config-group">
-            <label>[A]₀ Inicial (Opcional)</label>
-            <input type="number" id="initialAInp" value="0.80" step="any" placeholder="Ex: 1.0">
-            <small>Necessário para modelagem cinética</small>
-          </div>
-          <div class="config-group">
-            <label>Unidade de Concentração</label>
-            <select id="concUnitInp">
-              <option value="mol/L" selected>mol/L (Molar)</option>
-              <option value="mmol/L">mmol/L</option>
-              <option value="mol/m³">mol/m³</option>
-            </select>
-          </div>
-          <div class="config-group">
-            <label>Unidade de Tempo</label>
-            <select id="timeUnitInp">
-              <option value="s" selected>Segundos (s)</option>
-              <option value="min">Minutos (min)</option>
-              <option value="h">Horas (h)</option>
-            </select>
-          </div>
-          <div class="config-group">
-            <label>Temperatura (Descritiva)</label>
-            <input type="text" id="tempDescInp" value="25 °C" placeholder="Apenas informativo">
-            <small>Sem Arrhenius</small>
-          </div>
+          <div class="config-group"><label for="expNameInp">Nome do ensaio</label><input id="expNameInp" type="text" maxlength="80"></div>
+          <div class="config-group"><label for="productNameInp">Produto monitorado</label><input id="productNameInp" type="text" maxlength="25" placeholder="P"></div>
+          <div class="config-group"><label for="nuInp">Coeficiente do produto (ν)</label><input id="nuInp" type="text" inputmode="decimal"></div>
+          <div class="config-group"><label for="concUnitInp">Unidade de concentração do produto</label><select id="concUnitInp"><option>mol/L</option><option>mmol/L</option><option>mol/m³</option></select></div>
+          <div class="config-group"><label for="timeUnitInp">Unidade do tempo</label><select id="timeUnitInp"><option>s</option><option>min</option><option>h</option></select></div>
         </div>
-
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
-          <div style="display: flex; gap: 10px; align-items: center;">
-            <button id="addRowBtn" class="btn btn-primary btn-sm">＋ Adicionar Ponto Experimental</button>
-            <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: var(--text-dim);">
-              <input type="checkbox" id="smoothingToggle">
-              Suavizar ruído experimental antes da diferenciação
-            </label>
-          </div>
-          <div id="validationAlertBox" style="display: none; color: var(--danger); font-size: 11.5px; background: rgba(255, 102, 127, 0.1); border: 1px solid var(--danger); padding: 6px 12px; border-radius: 6px;"></div>
+        <h2>Concentrações iniciais dos reagentes</h2>
+        <p>Defina os reagentes em <button class="text-button" data-open="modeling">Lei de velocidade</button>. As concentrações iniciais são registradas em mol/L.</p>
+        <div id="initialConcentrations" class="config-grid"></div>
+        <div class="actions experiment-actions">
+          <button id="addRowBtn" class="btn btn-primary">Adicionar linha</button>
+          <label class="btn file-button">Importar CSV <input id="csvFileInput" type="file" accept=".csv,.txt,text/csv"></label>
+          <button id="togglePasteBoxBtn" class="btn" aria-expanded="false" aria-controls="pasteBoxWrap">Colar dados</button>
+          <button id="clearDataBtn" class="btn btn-danger">Limpar série</button>
+          <button id="exportDataCsvBtn" class="btn">Exportar CSV</button>
         </div>
-
-        <!-- TABELA EDITÁVEL DE ENTRADA -->
+        <div id="pasteBoxWrap" hidden>
+          <label for="pasteTextarea">Cole duas colunas de tempo e concentração, na ordem. Use ponto e vírgula ou tabulação com vírgula decimal.</label>
+          <textarea id="pasteTextarea" rows="4" placeholder="0;0,000&#10;10;0,120"></textarea>
+          <button id="applyPasteBtn" class="btn btn-primary">Aplicar dados</button>
+        </div>
+        <p id="importStatus" role="status"></p>
         <div class="table-wrapper">
           <table class="kinetics-table">
-            <thead>
-              <tr>
-                <th style="width: 70px;">Ponto</th>
-                <th>Tempo Experimental (t)</th>
-                <th>Concentração do Produto [P]</th>
-                <th style="width: 50px;">Ação</th>
-              </tr>
-            </thead>
+            <thead><tr><th>Ponto</th><th id="timeHeading">Tempo (s)</th><th id="concentrationHeading">Concentração do produto (mol/L)</th><th>Ação</th></tr></thead>
             <tbody id="dataTableTbody"></tbody>
           </table>
         </div>
+        <p id="validationAlertBox" role="status"></p>
 
-        <!-- TABELAS DE VELOCIDADES CALCULADAS -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 24px;">
-          <!-- Tabela Velocidades Médias -->
-          <div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-              <h3 style="font-size: 14px; margin: 0; color: var(--cyan);">Velocidade Média por Intervalo</h3>
-              <button id="exportRatesCsvBtn" class="btn btn-ghost btn-sm">💾 Exportar CSV</button>
-            </div>
-            <div class="table-wrapper">
-              <table class="kinetics-table">
-                <thead>
-                  <tr>
-                    <th>Int.</th>
-                    <th>Δt (s)</th>
-                    <th>t (s)</th>
-                    <th>[P] (mol/L)</th>
-                    <th>Δ[P]</th>
-                    <th>v_P (mol/L·s)</th>
-                    <th>v_reação</th>
-                  </tr>
-                </thead>
-                <tbody id="averageRatesTbody"></tbody>
-              </table>
-            </div>
+        <div id="experimentalResults" hidden>
+          <div class="metrics">
+            <article><span class="metric-icon cyan">v₀</span><div><small>VELOCIDADE INICIAL ESTIMADA</small><strong id="metricVInitial"></strong><em id="metricVInitialUnit"></em></div></article>
+            <article><span class="metric-icon violet">v̄</span><div><small>VELOCIDADE MÉDIA GLOBAL</small><strong id="metricVGlobal"></strong><em id="metricVGlobalUnit"></em></div></article>
           </div>
-
-          <!-- Tabela Velocidades Instantâneas -->
-          <div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-              <h3 style="font-size: 14px; margin: 0; color: var(--green);">Velocidade Instantânea (Diferenças Finitas)</h3>
-            </div>
-            <div class="table-wrapper">
-              <table class="kinetics-table">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>t (s)</th>
-                    <th>[P] (mol/L)</th>
-                    <th>d[P]/dt</th>
-                    <th>v_reação</th>
-                    <th>Método Numérico</th>
-                  </tr>
-                </thead>
-                <tbody id="instantaneousRatesTbody"></tbody>
-              </table>
-            </div>
+          <p id="initialRateNote"></p>
+          <div class="chartgrid">
+            <div><h3>Velocidade média por intervalo</h3><div class="table-wrapper"><table class="kinetics-table"><thead><tr><th>Intervalo</th><th>Tempo médio</th><th>Δ[P]</th><th class="rate-heading">v</th></tr></thead><tbody id="averageRatesTbody"></tbody></table></div></div>
+            <div><h3>Velocidade instantânea</h3><div class="table-wrapper"><table class="kinetics-table"><thead><tr><th>Tempo</th><th>[P]</th><th class="rate-heading">v</th><th>Método</th></tr></thead><tbody id="instantaneousRatesTbody"></tbody></table></div></div>
           </div>
-        </div>
-
-        <!-- GRÁFICOS DA SEÇÃO 2 (GRÁFICOS 1, 2, 3, 4, 5) -->
-        <h3 style="font-size: 15px; margin: 28px 0 16px; color: #fff; border-bottom: 1px solid var(--line); padding-bottom: 8px;">
-          Conjunto de Gráficos Cinéticos
-        </h3>
-
         <div class="chartgrid">
           <!-- Gráfico 1: Concentração × Tempo -->
           <article class="panel chartpanel">
             <div class="panelhead">
               <div>
-                <span class="eyebrow">GRÁFICO 1</span>
                 <h2>Concentração do Produto × Tempo</h2>
               </div>
               <div class="chart-actions">
@@ -380,8 +113,7 @@
           <article class="panel chartpanel">
             <div class="panelhead">
               <div>
-                <span class="eyebrow">GRÁFICO 2</span>
-                <h2>Velocidade Média × Tempo (em t_médio)</h2>
+                <h2>Velocidade Média × Tempo (no ponto médio)</h2>
               </div>
               <div class="chart-actions">
                 <button class="btn btn-sm export-png-btn" data-target="averageRateVsTimeCanvas">📷 PNG</button>
@@ -398,7 +130,6 @@
           <article class="panel chartpanel">
             <div class="panelhead">
               <div>
-                <span class="eyebrow">GRÁFICO 3</span>
                 <h2>Velocidade Instantânea v(t) × Tempo</h2>
               </div>
               <div class="chart-actions">
@@ -410,11 +141,10 @@
             </div>
           </article>
 
-          <!-- Gráfico 4: Velocidade × Concentração do Produto -->
+          <!-- Gráfico 4: Velocidade Instantânea × Concentração do Produto -->
           <article class="panel chartpanel">
             <div class="panelhead">
               <div>
-                <span class="eyebrow">GRÁFICO 4</span>
                 <h2>Velocidade × Concentração do Produto</h2>
               </div>
               <div class="chart-actions">
@@ -427,280 +157,88 @@
           </article>
         </div>
 
-        <!-- Gráfico 5: Concentração de Reagentes e Produtos × Tempo -->
-        <article class="panel chartpanel">
-          <div class="panelhead">
-            <div>
-              <span class="eyebrow">GRÁFICO 5</span>
-              <h2>Concentração dos Reagentes e Produtos × Tempo (Balanço Estequiométrico)</h2>
+
+          <div class="tangent-widget">
+            <div class="tangent-header"><h3>Tangente à curva de concentração</h3><p>Arraste o controle para escolher um instante. Use a lista para selecionar um tempo medido.</p></div>
+            <canvas id="tangentCanvas" style="height: 310px;" aria-label="Tangente à curva de concentração do produto"></canvas>
+            <div class="tangent-slider-wrap">
+              <label for="tangentTimeSlider">Instante da tangente <strong id="tangentSelectedTimeDisplay"></strong></label>
+              <input type="range" id="tangentTimeSlider" min="0" max="50" step="any">
+              <label for="tangentSample">Tempo medido <select id="tangentSample"></select></label>
             </div>
-            <div class="chart-actions">
-              <button class="btn btn-sm export-png-btn" data-target="reactantsAndProductsCanvas">📷 PNG</button>
+            <div class="tangent-readouts">
+              <div class="tangent-readout-item"><small>Concentração</small><strong id="tangentConcDisplay"></strong></div>
+              <div class="tangent-readout-item"><small>Taxa de formação d[P]/dt</small><strong id="tangentSlopeDisplay"></strong></div>
+              <div class="tangent-readout-item"><small>Velocidade da reação v(t)</small><strong id="tangentVInstDisplay"></strong></div>
             </div>
           </div>
-          <div class="panelbody">
-            <canvas id="reactantsAndProductsCanvas"></canvas>
-          </div>
-        </article>
+          <h2>Memória de cálculo</h2>
+          <div id="calcMemoryContainer"></div>
+        </div>
       </div>
     </section>
 
-    <!-- SEÇÃO 3: MODELAGEM CINÉTICA (LEIS INTEGRADAS DE VELOCIDADE) -->
-    <section id="modeling" class="panel">
-      <div class="panelhead">
-        <div>
-          <span class="eyebrow">LEIS INTEGRADAS DE VELOCIDADE</span>
-          <h2>03 — Determinação da Ordem e Constante Cinética</h2>
-        </div>
-      </div>
+    <section id="modeling" class="panel" hidden>
+      <div class="panelhead"><h2>Determinação da Lei de Velocidade</h2></div>
       <div class="panelbody">
-        <div id="kineticsNoA0Notice"></div>
-
-        <div id="kineticsModelingSectionWrap" style="display: none;">
-          <p style="color: var(--text-dim); margin-bottom: 16px;">
-            Ajuste dos modelos integrados de velocidade para reação dependente de um único reagente [A]. 
-            A ordem mais compatível é apresentada como uma <strong>estimativa experimental</strong> considerando o coeficiente de determinação (R²) e o erro quadrático médio (RMSE) avaliado na escala original de concentração.
-          </p>
-
-          <!-- CARDS DOS TRÊS MODELOS -->
-          <div class="models-grid">
-            <!-- Ordem Zero -->
-            <div class="model-card" id="cardOrder0">
-              <span class="model-badge-best" style="display: none;">Mais Compatível</span>
-              <h4>Ordem Zero (n = 0)</h4>
-              <div class="eq">[A] = [A]₀ − k·t</div>
-              <div class="model-stats">
-                <div>R² do ajuste: <b class="stat-r2">—</b></div>
-                <div>Constante k: <b class="stat-k">—</b></div>
-                <div>RMSE (escala original): <b class="stat-rmse">—</b></div>
-                <div>Inclinação: <span class="stat-slope">—</span></div>
-                <div>Intercepto: <span class="stat-intercept">—</span></div>
-              </div>
-            </div>
-
-            <!-- Primeira Ordem -->
-            <div class="model-card" id="cardOrder1">
-              <span class="model-badge-best" style="display: none;">Mais Compatível</span>
-              <h4>Primeira Ordem (n = 1)</h4>
-              <div class="eq">ln[A] = ln[A]₀ − k·t</div>
-              <div class="model-stats">
-                <div>R² do ajuste: <b class="stat-r2">—</b></div>
-                <div>Constante k: <b class="stat-k">—</b></div>
-                <div>RMSE (escala original): <b class="stat-rmse">—</b></div>
-                <div>Inclinação: <span class="stat-slope">—</span></div>
-                <div>Intercepto: <span class="stat-intercept">—</span></div>
-              </div>
-            </div>
-
-            <!-- Segunda Ordem -->
-            <div class="model-card" id="cardOrder2">
-              <span class="model-badge-best" style="display: none;">Mais Compatível</span>
-              <h4>Segunda Ordem (n = 2)</h4>
-              <div class="eq">1/[A] = 1/[A]₀ + k·t</div>
-              <div class="model-stats">
-                <div>R² do ajuste: <b class="stat-r2">—</b></div>
-                <div>Constante k: <b class="stat-k">—</b></div>
-                <div>RMSE (escala original): <b class="stat-rmse">—</b></div>
-                <div>Inclinação: <span class="stat-slope">—</span></div>
-                <div>Intercepto: <span class="stat-intercept">—</span></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- GRÁFICO DE LINEARIZAÇÃO CINÉTICA -->
-          <article class="panel chartpanel" style="margin-top: 20px;">
-            <div class="panelhead">
-              <div>
-                <span class="eyebrow">LINEARIZAÇÃO EXPERIMENTAL</span>
-                <h2>Gráfico de Linearização da Lei Integrada</h2>
-              </div>
-              <div class="chart-actions">
-                <button class="btn btn-sm btn-order-select" data-order="order0">[A] × t (Ordem 0)</button>
-                <button class="btn btn-sm btn-primary btn-order-select" data-order="order1">ln[A] × t (Ordem 1)</button>
-                <button class="btn btn-sm btn-order-select" data-order="order2">1/[A] × t (Ordem 2)</button>
-                <button class="btn btn-sm export-png-btn" data-target="linearizationCanvas">📷 PNG</button>
-              </div>
-            </div>
-            <div class="panelbody">
-              <canvas id="linearizationCanvas"></canvas>
-            </div>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <!-- SEÇÃO 4: COMPARAÇÃO DE EXPERIMENTOS -->
-    <section id="comparison" class="panel">
-      <div class="panelhead">
-        <div>
-          <span class="eyebrow">COMPARAÇÃO MULTI-EXPERIMENTAL</span>
-          <h2>04 — Comparação de Ensaios Experimentais</h2>
-        </div>
+        <p>Os ensaios fornecem v₀ automaticamente pelo primeiro intervalo a partir de t = 0. Use ensaios da mesma reação realizados sob condições comparáveis e varie as concentrações iniciais de forma independente.</p>
+        <h3>Reagentes do modelo</h3>
+        <div id="reagentList" class="config-grid"></div>
         <div class="actions">
-          <button id="addExpComparisonBtn" class="btn btn-primary btn-sm">＋ Salvar Ensaio Atual para Comparação</button>
+          <button id="addReagent" class="btn">Adicionar reagente</button>
+          <label for="fitOrigin">Dados do ajuste <select id="fitOrigin"><option value="recorded">Ensaios cadastrados</option><option value="simulated">Exemplos simulados</option></select></label>
         </div>
-      </div>
-      <div class="panelbody">
-        <p style="color: var(--text-dim); margin-bottom: 14px;">
-          Permite comparar múltiplos experimentos realizados sob diferentes concentrações iniciais, temperaturas descritivas ou presença de catalisadores. 
-          As curvas são sobrepostas com cores distintas para evidenciar a variação na taxa de formação de produtos sem recorrer a Arrhenius.
-        </p>
-
-        <!-- Tabela Comparativa -->
+        <p id="fitOriginNote"></p>
         <div class="table-wrapper">
-          <table class="kinetics-table">
-            <thead>
-              <tr>
-                <th>Experimento</th>
-                <th>Condição / Temperatura</th>
-                <th>v₀ Inicial (mol/L·s)</th>
-                <th>v̄ Média (mol/L·s)</th>
-                <th>v_máx (mol/L·s)</th>
-                <th>Tempo Total</th>
-                <th>Ordem Prevista</th>
-                <th>k Estimada</th>
-                <th style="width: 50px;">Ação</th>
-              </tr>
-            </thead>
-            <tbody id="comparisonTbody"></tbody>
-          </table>
+          <table class="kinetics-table"><thead id="fitTableHead"></thead><tbody id="fitTableBody"></tbody></table>
         </div>
-
-        <!-- Gráfico de Sobreposição -->
-        <article class="panel chartpanel" style="margin-top: 18px;">
-          <div class="panelhead">
-            <div>
-              <span class="eyebrow">SOBREPOSIÇÃO EXPERIMENTAL</span>
-              <h2>Evolução da Concentração nos Diferentes Experimentos</h2>
-            </div>
-            <div class="chart-actions">
-              <button class="btn btn-sm export-png-btn" data-target="comparisonChartCanvas">📷 PNG</button>
-            </div>
-          </div>
-          <div class="panelbody">
-            <canvas id="comparisonChartCanvas"></canvas>
-          </div>
+        <p id="fitStatus" role="status"></p>
+        <div id="fitResults" hidden>
+          <div id="fitSummary" class="metrics"></div>
+          <div id="fitMemory" class="theory-formula-box"></div>
+        </div>
+        <article class="panel chartpanel" id="comparisonPanel" hidden>
+          <div class="panelhead"><h2>Séries temporais dos ensaios no ajuste</h2><button class="btn btn-sm export-png-btn" data-target="comparisonChartCanvas">PNG</button></div>
+          <div class="panelbody"><canvas id="comparisonChartCanvas"></canvas></div>
         </article>
       </div>
     </section>
 
-    <!-- SEÇÃO 5: FUNDAMENTAÇÃO TEÓRICA -->
-    <section id="theory" class="panel">
-      <div class="panelhead">
-        <div>
-          <span class="eyebrow">CONEXÃO CIENTÍFICA</span>
-          <h2>05 — Fundamentação Teórica: Química e Cálculo Diferencial</h2>
-        </div>
-      </div>
+    <section id="theory" class="panel" hidden>
+      <div class="panelhead"><h2>Fundamentação Teórica</h2></div>
       <div class="panelbody">
-        <div class="theory-block">
-          <h3>1. Conceito de Velocidade de Reação e Coeficientes Estequiométricos</h3>
-          <p>
-            Em uma reação química genérica da forma $aA + bB \rightarrow cC + dD$, as taxas de variação das concentrações molares das espécies não são necessariamente iguais devido à proporção estequiométrica de combinação. Para definir uma velocidade única e independente da substância monitorada, normaliza-se a derivada pelo respectivo coeficiente estequiométrico $\nu$:
-          </p>
-          <div class="theory-formula-box">
-            v = -\frac{1}{a}\frac{d[A]}{dt} = -\frac{1}{b}\frac{d[B]}{dt} = +\frac{1}{c}\frac{d[C]}{dt} = +\frac{1}{d}\frac{d[D]}{dt}
-          </div>
-          <p>
-            Ao monitorar experimentalmente a formação de um produto $P$ com coeficiente $\nu$, a velocidade média no intervalo $[t_i, t_{i+1}]$ é dada por $v_{\text{méd}} = \frac{1}{\nu} \frac{\Delta [P]}{\Delta t}$, enquanto a velocidade instantânea é rigorosamente a derivada temporal $v(t) = \frac{1}{\nu} \frac{d[P]}{dt}$.
-          </p>
+        <div class="theory-block"><h3>Velocidade de reação</h3>
+          <p>Para um produto P com coeficiente estequiométrico ν, a velocidade média é a taxa de formação dividida por ν. A média global usa os extremos da série. No gráfico por intervalo, cada média é posicionada no ponto médio temporal.</p>
+          <div class="theory-formula-box">v̄ = (1/ν) × Δ[P]/Δt</div>
         </div>
-
-        <div class="theory-block">
-          <h3>2. Interpretação Geométrica da Derivada e Diferenciação Numérica</h3>
-          <p>
-            Graficamente, a velocidade instantânea de formação de um produto em um instante $t^*$ corresponde exatamente à <strong>inclinação da reta tangente</strong> à curva $[P](t)$ naquele ponto.
-          </p>
-          <p>
-            Como os dados experimentais são coletados em instantes discretos, métodos numéricos de diferenças finitas são empregados para aproximar essa derivada:
-          </p>
-          <div class="theory-formula-box">
-            \text{Diferença Central (Uniforme): } v_i \approx \frac{1}{\nu} \cdot \frac{[P]_{i+1} - [P]_{i-1}}{2\,\Delta t} \quad (\text{Erro } O(\Delta t^2))
-          </div>
-          <p>
-            Para intervalos não uniformes ($h_1 = t_i - t_{i-1}$ e $h_2 = t_{i+1} - t_i$), utiliza-se a interpolação polinomial de Lagrange de 3 pontos:
-          </p>
-          <div class="theory-formula-box">
-            \frac{d[P]}{dt}\Big|_{t_i} \approx \frac{-h_2^2 [P]_{i-1} + (h_2^2 - h_1^2)[P]_i + h_1^2 [P]_{i+1}}{h_1 h_2 (h_1 + h_2)}
-          </div>
+        <div class="theory-block"><h3>Diferenças finitas e reta tangente</h3>
+          <p>A velocidade instantânea é v(t) = (1/ν) × d[P]/dt. Em uma malha uniforme, a diferença central usa os dois vizinhos e divide a variação de concentração pela diferença entre seus tempos.</p>
+          <p>Para três amostras a, b e c, com tempos distintos, sejam s₁ e s₂ as inclinações secantes de a até b e de b até c. A derivada do interpolador quadrático é dada pela expressão abaixo. O mesmo cálculo usa três pontos avançados ou recuados nas extremidades. Com dois pontos, usa-se a secante.</p>
+          <div class="theory-formula-box">d[P]/dt ≈ s₁ + ((t − tₐ) + (t − tᵦ)) × (s₂ − s₁)/(t꜀ − tₐ)</div>
+          <p>A curva interativa usa interpolação cúbica de Hermite com as derivadas de diferenças finitas nos pontos medidos. Entre amostras, a inclinação é a da curva interpolada. O resultado pode ser sensível ao ruído e à frequência de amostragem.</p>
         </div>
-
-        <div class="theory-block">
-          <h3>3. Leis Integradas de Velocidade (Reação Unimolecular)</h3>
-          <p>
-            Conhecendo-se a concentração inicial do reagente $[A]_0$ e a estequiometria $[A](t) = [A]_0 - \frac{a}{c}([P](t) - [P]_0)$, pode-se comparar a cinética frente aos modelos integrados clássicos:
-          </p>
-          <ul>
-            <li><strong>Ordem Zero:</strong> Velocidade independente da concentração ($v = k$). A integração resulta em $[A] = [A]_0 - kt$.</li>
-            <li><strong>Primeira Ordem:</strong> Velocidade diretamente proporcional ($v = k[A]$). A integração gera $\ln[A] = \ln[A]_0 - kt$.</li>
-            <li><strong>Segunda Ordem:</strong> Velocidade proporcional ao quadrado ($v = k[A]^2$). A integração gera $\frac{1}{[A]} = \frac{1}{[A]_0} + kt$.</li>
-          </ul>
-          <p>
-            <em>Ressalva epistemológica:</em> A determinação da ordem não deve se apoiar exclusivamente no maior $R^2$ obtido pela linearização, pois a transformação matemática (como o logaritmo) distorce a estrutura dos erros experimentais. O sistema avalia também os resíduos e o RMSE na escala original.
-          </p>
+        <div class="theory-block"><h3>Método das velocidades iniciais</h3>
+          <p>Para estimar v₀, usa-se a média do primeiro intervalo a partir de t = 0. Escolha um primeiro intervalo suficientemente curto para que essa secante aproxime a velocidade no início da reação.</p>
+          <div class="theory-formula-box">ln(v₀) = ln(k) + n₁ ln([R₁]₀) + … + nₚ ln([Rₚ]₀)</div>
+          <p>A regressão estima o intercepto e as ordens parciais por QR de Householder com pivotamento. O ajuste exige pelo menos p + 1 ensaios válidos para p reagentes. Ensaios adicionais permitem avaliar resíduos. Séries com v₀ ou concentrações iniciais não positivas ficam fora do ajuste logarítmico. Concentrações colineares ou com variação insuficiente impedem a estimativa confiável dos parâmetros.</p>
+          <p>Os valores usados no logaritmo são expressos em mol/L e segundos. A ordem global n é a soma das ordens parciais. A unidade de k é (mol/L) elevada a 1 − n, multiplicada por s⁻¹.</p>
         </div>
       </div>
     </section>
 
-    <!-- SEÇÃO 6: VALIDAÇÃO E MEMÓRIA DE CÁLCULO -->
-    <section id="validation" class="panel">
-      <div class="panelhead">
-        <div>
-          <span class="eyebrow">AUDITORIA E RIGOR NUMÉRICO</span>
-          <h2>06 — Validação Científica e Memória de Cálculo</h2>
-        </div>
-      </div>
+    <section id="reports" class="panel" hidden>
+      <div class="panelhead"><h2>Relatório Científico e Exportação</h2></div>
       <div class="panelbody">
-        <p style="color: var(--text-dim); margin-bottom: 16px;">
-          Apresentação detalhada da substituição numérica para cada intervalo experimental, garantindo transparência analítica e consistência dimensional.
-        </p>
-
-        <!-- CONTAINER DA MEMÓRIA DE CÁLCULO -->
-        <div id="calcMemoryContainer"></div>
-      </div>
-    </section>
-
-    <!-- SEÇÃO 7: RELATÓRIOS -->
-    <section id="reports" class="panel">
-      <div class="panelhead">
-        <div>
-          <span class="eyebrow">EXPORTAÇÃO E COMPARTILHAMENTO</span>
-          <h2>07 — Relatório Científico e Exportação</h2>
-        </div>
+        <p>Exporte os dados e as velocidades do ensaio selecionado ou imprima o relatório do ensaio e do ajuste ativo.</p>
         <div class="actions">
-          <button id="printReportBtn" class="btn btn-primary btn-sm">🖨 Imprimir / Salvar em PDF</button>
-        </div>
-      </div>
-      <div class="panelbody">
-        <p style="color: var(--text-dim); margin-bottom: 20px;">
-          Gere relatórios completos para apresentação acadêmica contendo os dados brutos, memória de cálculo, velocidades médias e instantâneas e diagnóstico de modelos cinéticos.
-        </p>
-
-        <div style="background: rgba(16, 29, 49, 0.6); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px;">
-          <h3 style="margin-top: 0; color: #fff; font-size: 16px;">Formatos de Exportação Disponíveis</h3>
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-top: 14px;">
-            <div style="background: #081426; padding: 14px; border-radius: 8px; border: 1px solid var(--line);">
-              <strong style="display: block; color: var(--cyan); margin-bottom: 4px;">PDF Completo</strong>
-              <small style="color: var(--muted); display: block; margin-bottom: 8px;">Relatório acadêmico com formatação científica, pronto para impressão em A4.</small>
-              <button class="btn btn-sm" onclick="window.print()">Gerar PDF</button>
-            </div>
-            <div style="background: #081426; padding: 14px; border-radius: 8px; border: 1px solid var(--line);">
-              <strong style="display: block; color: var(--green); margin-bottom: 4px;">CSV dos Dados Brutos</strong>
-              <small style="color: var(--muted); display: block; margin-bottom: 8px;">Tabela com as séries temporais de concentração de produto.</small>
-              <button class="btn btn-sm" onclick="document.querySelector('#exportDataCsvBtn').click()">Baixar CSV</button>
-            </div>
-            <div style="background: #081426; padding: 14px; border-radius: 8px; border: 1px solid var(--line);">
-              <strong style="display: block; color: var(--orange); margin-bottom: 4px;">CSV de Velocidades</strong>
-              <small style="color: var(--muted); display: block; margin-bottom: 8px;">Tabela completa de taxas médias e instantâneas calculadas.</small>
-              <button class="btn btn-sm" onclick="document.querySelector('#exportRatesCsvBtn').click()">Baixar Velocidades</button>
-            </div>
-          </div>
+          <button class="btn btn-primary" id="printReportBtn">Imprimir / salvar PDF</button>
+          <button class="btn" data-export="raw">Baixar dados em CSV</button>
+          <button class="btn" data-export="rates">Baixar velocidades em CSV</button>
         </div>
       </div>
     </section>
   </main>
 
-  <!-- SCRIPTS NATIVOS -->
   <script src="/js/kinetics-engine.js"></script>
   <script src="/js/charts.js"></script>
   <script src="/js/app.js"></script>

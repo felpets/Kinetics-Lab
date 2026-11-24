@@ -2,129 +2,37 @@
 
 > *Projeto Acadêmico para minha Noiva*
 
-🌐 **Versão Online Publicada:** [https://kinetics-lab-nine.vercel.app](https://kinetics-lab-nine.vercel.app)
+[Aplicação publicada na Vercel](https://kinetics-lab-nine.vercel.app/)
 
-**Subtítulo:** *Determinação da velocidade de reações químicas por métodos numéricos aplicados à concentração de produtos.*
+O Kinetics Lab determina a velocidade de uma reação a partir de medições da concentração de um produto ao longo do tempo. Ele usa as velocidades iniciais de vários ensaios para estimar as ordens parciais, a ordem global e a constante cinética.
 
----
+## Determinação Experimental da Velocidade
 
-## 🎯 Objetivo do Programa
+1. Crie um ensaio, identifique o produto e informe seu coeficiente estequiométrico ν.
+2. Insira os pares de tempo e concentração na tabela, cole duas colunas de uma planilha ou importe um CSV. O CSV pode ter cabeçalho. Use ponto e vírgula ou tabulação com vírgula decimal, ou use vírgula como delimitador com ponto decimal.
+3. Confira as unidades do ensaio. A aplicação aceita segundos, minutos ou horas e mol/L, mmol/L ou mol/m³.
+4. Compare as tabelas e os gráficos de concentração × tempo, velocidade média × tempo, velocidade instantânea × tempo e velocidade instantânea × concentração. Escolha um instante na tangente interativa ou abra a memória de cálculo para ver as substituições.
 
-O **Kinetics Lab** é uma ferramenta computacional e científica voltada à determinação da velocidade de reações químicas a partir de dados experimentais da evolução da concentração de produtos ao longo do tempo.
+A média por intervalo é v̄ = (1/ν) × Δ[P]/Δt. Cada valor é posicionado no tempo médio do intervalo. A média global usa os extremos da série, inclusive quando os intervalos têm durações diferentes.
 
-Diferente de simuladores convencionais que deduzem concentrações a partir de constantes cinéticas teóricas pré-definidas, o programa trata a **concentração de produtos como a variável experimental primária de entrada**, aplicando diferenciação numérica e cálculo diferencial para determinar:
+A velocidade instantânea é v(t) = (1/ν) × d[P]/dt. Com três ou mais pontos, o motor diferencia o polinômio de Lagrange local de três amostras, usando os intervalos reais. Isso produz a diferença central nos pontos internos e diferenças unilaterais nas extremidades. Com dois pontos, o motor usa a inclinação secante. A tangente usa a curva de Hermite, cuja inclinação coincide com as diferenças finitas nos pontos medidos.
 
-* **Velocidade média da reação** (global e em cada intervalo temporal).
-* **Velocidade instantânea aproximada** $v(t)$ por métodos numéricos de diferenças finitas.
-* **Velocidade inicial estimada** $v_0$.
-* **Velocidades máxima e mínima** observadas no ensaio.
-* **Interpretação geométrica da derivada** através da reta tangente interativa.
-* **Quantidade total de produto formado** por unidade de volume.
-* **Concentração dos reagentes restantes**, via balanço estequiométrico quando $[A]_0$ for informado.
-* **Ordem cinética estimada e constante de velocidade experimental**, via modelos integrados de velocidade (ordem zero, primeira e segunda ordem).
-* **Comparação multi-experimental** de ensaios sob diferentes condições sem uso de equações de dependência térmica teóricas.
+A velocidade inicial estimada para o ajuste é a média do primeiro intervalo quando a série começa em t = 0. A tabela de velocidades instantâneas também informa a derivada no primeiro ponto. A estimativa por secante é mais representativa quando o primeiro intervalo é curto.
 
-> [!IMPORTANT]
-> **Diretriz Científica:** O projeto **não utiliza a equação de Arrhenius**, energia de ativação ou fatores pré-exponenciais em nenhuma parte de seus cálculos. Todas as grandezas e taxas são estimadas diretamente dos dados experimentais através de métodos numéricos e cálculo diferencial.
+## Determinação da Lei de Velocidade
 
----
+Cadastre os reagentes na seção **Lei de velocidade**. Para cada ensaio da mesma reação, preencha as concentrações iniciais dos reagentes em mol/L e insira a série do produto. Os ensaios ficam salvos neste navegador.
 
-## 💻 Linguagens e Tecnologias
+A aplicação normaliza v₀ para mol·L⁻¹·s⁻¹ e ajusta ln(v₀) = ln(k) + Σ nⱼ ln([Rⱼ]₀). A regressão usa QR de Householder com pivotamento e verifica o posto e o condicionamento. São necessários pelo menos p + 1 ensaios válidos para p reagentes. Concentrações iniciais e velocidades iniciais precisam ser positivas. Variações independentes nas concentrações ajudam a identificar as ordens. Ensaios adicionais fornecem graus de liberdade para avaliar os resíduos.
 
-* **HTML5**: Estruturação semântica da aplicação, tabelas de dados dinâmicas e elementos de desenho para Canvas.
-* **CSS3**: Design responsivo moderno com tema dark mode científico, visualização em alta densidade (DPI) e formatação específica para impressão de relatórios em PDF (`@media print`).
-* **JavaScript (ES6+)**: Motor numérico modular (`kinetics-engine.js`), motor gráfico vetorial (`charts.js`) e gerenciador de estado reativo (`app.js`).
-* **Node.js**: Automação de testes científicos automatizados (`test_suite.js`).
+A ordem global n é a soma das ordens parciais. A constante é k = exp(intercepto), com unidade (mol/L)^(1 − n) · s⁻¹.
 
----
+Os exemplos de referência e de regressão são simulados. Selecione **Exemplos simulados** para ajustar esse conjunto. A seção **Relatórios** permite exportar a série e as velocidades em CSV ou imprimir o relatório em PDF.
 
-## 🔬 Fundamentação Matemática e Métodos Numéricos
-
-Considere a reação química genérica:
-
-$$aA + bB \longrightarrow cC + dD$$
-
-Ao monitorar experimentalmente a formação de um produto $P$ com coeficiente estequiométrico $\nu$:
-
-### 1. Velocidade Média
-No intervalo de tempo entre $t_i$ e $t_{i+1}$:
-
-$$v_{\text{méd}} = \frac{1}{\nu} \cdot \frac{\Delta [P]}{\Delta t} = \frac{1}{\nu} \cdot \frac{[P]_{i+1} - [P]_i}{t_{i+1} - t_i}$$
-
-* Taxa de formação do produto: $v_P = \frac{\Delta [P]}{\Delta t}$
-* Velocidade da reação: $v = \frac{1}{\nu} v_P$
-
-### 2. Velocidade Instantânea e Métodos de Diferenciação Numérica
-A velocidade instantânea corresponde ao limite e à derivada temporal:
-
-$$v(t) = \frac{1}{\nu} \cdot \frac{d[P]}{dt}$$
-
-Para aproximar numericamente essa derivada a partir de dados discretos:
-
-#### A. Intervalos Uniformes ($\Delta t = \text{constante}$)
-* **Pontos Internos ($0 < i < N$):** Fórmula de Diferença Finita Central de 3 pontos (erro $O(\Delta t^2)$):
-  $$v_i \approx \frac{1}{\nu} \cdot \frac{[P]_{i+1} - [P]_{i-1}}{2\,\Delta t}$$
-* **Extremidade Inicial ($t = t_0$):** Diferença Finita Progressiva de 3 pontos:
-  $$v_0 \approx \frac{1}{\nu} \cdot \frac{-3[P]_0 + 4[P]_1 - [P]_2}{2\,\Delta t}$$
-* **Extremidade Final ($t = t_N$):** Diferença Finita Regressiva de 3 pontos:
-  $$v_N \approx \frac{1}{\nu} \cdot \frac{[P]_{N-2} - 4[P]_{N-1} + 3[P]_N}{2\,\Delta t}$$
-
-#### B. Intervalos Não-Uniformes ($h_1 = t_i - t_{i-1}$, $h_2 = t_{i+1} - t_i$)
-O programa implementa a diferenciação de polinômios interpoladores de Lagrange de 3 pontos:
-
-$$\frac{d[P]}{dt}\Big|_{t_i} \approx \frac{-h_2^2 [P]_{i-1} + (h_2^2 - h_1^2)[P]_i + h_1^2 [P]_{i+1}}{h_1 h_2 (h_1 + h_2)}$$
-
-### 3. Interpretação Geométrica da Reta Tangente
-Graficamente, a taxa de formação $\frac{d[P]}{dt}$ no instante selecionado $t^*$ corresponde exatamente ao **coeficiente angular (inclinação) da reta tangente** à curva de concentração:
-
-$$[P]_{\text{tangente}}(t) = [P](t^*) + \left(\frac{d[P]}{dt}\Big|_{t^*}\right) \cdot (t - t^*)$$
-
-### 4. Relação Estequiométrica com o Reagente
-Para uma reação $aA \rightarrow cP$, em volume constante:
-
-$$[A](t) = [A]_0 - \frac{a}{c} \cdot ([P](t) - [P]_0)$$
-
-### 5. Modelagem Cinética por Leis Integradas
-Quando $[A]_0$ é fornecido, o simulador testa as leis integradas clássicas:
-* **Ordem Zero:** $[A] = [A]_0 - kt$
-* **Primeira Ordem:** $\ln[A] = \ln[A]_0 - kt$
-* **Segunda Ordem:** $\frac{1}{[A]} = \frac{1}{[A]_0} + kt$
-
-A seleção do modelo baseia-se na conjugação entre o $R^2$ da linearização e o Erro Quadrático Médio (RMSE) avaliado na escala original das concentrações.
-
----
-
-## 🏛️ Estrutura da Aplicação (7 Seções)
-
-1. **01 — Visão geral:** Dashboard com 8 indicadores principais e widget interativo da reta tangente com slider temporal.
-2. **02 — Análise experimental:** Configuração estequiométrica, tabela editável, colar dados de planilha, importar CSV e tabelas de velocidades calculadas.
-3. **03 — Modelagem cinética:** Avaliação comparativa das ordens 0, 1 e 2, com gráficos de linearização $[A]$, $\ln[A]$ e $1/[A]$.
-4. **04 — Comparação de experimentos:** Cadastro e sobreposição visual de múltiplos ensaios experimentais sob diferentes condições.
-5. **05 — Fundamentação teórica:** Artigo científico e pedagógico integrando química geral, cálculo diferencial e incertezas experimentais.
-6. **06 — Validação e memória de cálculo:** Auditoria passo a passo com fórmulas, substituições numéricas de cada intervalo e resultados com unidades.
-7. **07 — Relatórios:** Visualização e geração de relatórios acadêmicos prontos para impressão em PDF e download de dados/velocidades em CSV.
-
----
-
-## 📊 Gráficos Interativos Implementados
-
-* **Gráfico 1:** Concentração do Produto $[P] \times t$ (pontos experimentais e spline ajustada).
-* **Gráfico 2:** Velocidade Média $v_{\text{méd}} \times t$ (plotada nos instantes médios dos intervalos).
-* **Gráfico 3:** Velocidade Instantânea $v(t) \times t$ (aproximação por derivadas de diferenças finitas).
-* **Gráfico 4:** Velocidade $v \times [P]$ (evolução da rapidez em função da formação do produto).
-* **Gráfico 5:** Concentração de Reagentes $[A]$ e Produtos $[P] \times t$ (balanço estequiométrico).
-* **Gráfico 6:** Tangente Interativa à Curva de Concentração (demonstração visual da derivada geométrica).
-* **Gráfico de Linearização:** Análise dos modelos cinéticos integrados.
-* **Gráfico Comparativo:** Sobreposição multi-experimental com curvas coloridas na mesma escala.
-
----
-
-## ✅ Critérios de Aceitação Validados
-
-Testados rigorosamente através da suíte automatizada `test_suite.js` utilizando o conjunto padrão com $\nu = 1$:
+## Caso de referência simulado
 
 | Tempo (s) | Concentração (mol/L) |
-|---|---|
+|---:|---:|
 | 0 | 0,000 |
 | 10 | 0,120 |
 | 20 | 0,210 |
@@ -132,40 +40,17 @@ Testados rigorosamente através da suíte automatizada `test_suite.js` utilizand
 | 40 | 0,350 |
 | 50 | 0,400 |
 
-### Resultados Esperados e Aprovados:
-* $v_{\text{méd}}(0 \rightarrow 10\text{ s}) = 0{,}012\text{ mol/(L}\cdot\text{s)}$
-* $v_{\text{méd}}(10 \rightarrow 20\text{ s}) = 0{,}009\text{ mol/(L}\cdot\text{s)}$
-* $v_{\text{méd}}(20 \rightarrow 30\text{ s}) = 0{,}008\text{ mol/(L}\cdot\text{s)}$
-* $v_{\text{méd}}(30 \rightarrow 40\text{ s}) = 0{,}006\text{ mol/(L}\cdot\text{s)}$
-* $v_{\text{méd}}(40 \rightarrow 50\text{ s}) = 0{,}005\text{ mol/(L}\cdot\text{s)}$
-* $v_{\text{méd, global}} = 0{,}008\text{ mol/(L}\cdot\text{s)}$
-* $v_{\text{inst}}(t = 10\text{ s}) = 0{,}0105\text{ mol/(L}\cdot\text{s)}$
+Para ν = 1, as médias são 0,012, 0,009, 0,008, 0,006 e 0,005 mol/(L·s). A média global é 0,008 mol/(L·s). A diferença central em 10 s fornece 0,0105 mol/(L·s).
 
----
+## Desenvolvimento
 
-## 🚀 Como Executar Localmente
+A aplicação usa HTML, CSS, JavaScript e Canvas, com compilação estática pelo Vite.
 
-### 1. Inicialização Rápida no Windows (1 Clique)
-Dê um duplo-clique no arquivo:
-```bat
-dev.bat
-```
-*(O script abrirá automaticamente o navegador em `http://localhost:5173`).*
-
-### 2. Execução dos Testes Unitários
-Para rodar a bateria de testes de validação matemática:
-```bat
-test.bat
-# ou no terminal:
-node test_suite.js
+```sh
+npm ci
+npm run dev
+npm test
+npm run build
 ```
 
-### 3. Modo Direto (Sem Instalações)
-Abra a pasta `public/` e dê um duplo-clique em `index.html` para abrir diretamente no navegador padrão.
-
----
-
-## ☁️ Acesso Online
-
-O projeto está publicado em:
-👉 **[https://kinetics-lab-nine.vercel.app](https://kinetics-lab-nine.vercel.app)**
+A suíte em `test_suite.js` verifica a série de referência, os formatos CSV, a diferenciação em malhas não uniformes e a regressão sobre ensaios simulados com parâmetros conhecidos.

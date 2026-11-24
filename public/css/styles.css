@@ -450,3 +450,69 @@ canvas { width: 100%; height: 270px; display: block; }
     border: 1px solid #d1d5db !important;
   }
 }
+
+/* Cadastro, séries temporais e ajuste */
+[hidden] { display: none !important; }
+
+.experiment-toolbar, .experiment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 8px;
+  margin: 16px 0;
+}
+.experiment-toolbar label { flex: 1 1 180px; max-width: 320px; }
+.experiment-toolbar select { width: 100%; }
+.config-group, .chartgrid > * { min-width: 0; }
+.config-group button { justify-self: start; }
+.origin, #fitOriginNote { color: var(--text-dim); }
+.simulated { color: var(--yellow, #ffd166) !important; }
+#validationAlertBox, #importStatus, #fitStatus { color: var(--text-dim); }
+#validationAlertBox:empty, #importStatus:empty { display: none; }
+#experimentalResults { margin-top: 20px; }
+#fitResults, #comparisonPanel { margin-top: 18px; }
+#fitMemory { margin-top: 12px; overflow-wrap: anywhere; }
+#fitMemory p { margin: 5px 0; }
+#pasteBoxWrap { margin: 12px 0; }
+#pasteBoxWrap textarea { display: block; width: 100%; margin: 6px 0; }
+.file-button { position: relative; }
+.file-button:focus-within { outline: 2px solid var(--cyan); }
+.file-button input { position: absolute; inset: 0; opacity: 0; width: 100%; cursor: pointer; }
+#tangentCanvas { cursor: crosshair; }
+#tangentSample { margin-left: 6px; }
+.text-button {
+  padding: 0;
+  color: var(--cyan);
+  text-align: left;
+  font: inherit;
+  background: none;
+  border: 0;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.calc-memory-item { padding: 8px 12px; border-bottom: 1px solid var(--line); }
+.calc-memory-item summary { cursor: pointer; font-weight: 600; }
+.calc-memory-item p { margin: 8px 0; overflow-wrap: anywhere; }
+.print-value { display: none; }
+
+@media (min-width: 681px) and (max-width: 1100px) {
+  .sidebar { width: 152px; }
+  .sidebar .navitem { font-size: 11px; text-align: left; justify-content: flex-start; padding: 10px; }
+  main { margin-left: 152px; }
+}
+
+@media (max-width: 680px) {
+  .sidebar nav { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .sidebar .navitem { font-size: 10px; line-height: 1.2; padding: 3px; }
+  .experiment-toolbar label { max-width: none; }
+}
+
+@media print {
+  #reports, #pasteBoxWrap, .experiment-toolbar { display: none !important; }
+  .print-value { display: inline; color: #111827; }
+  .panel { page-break-inside: auto; }
+  .chartpanel, .calc-memory-item { break-inside: avoid; }
+  .panel h1, .panel h2, .panel p, .metrics small, .metrics strong, .metrics em, .text-button,
+  .simulated { color: #111827 !important; }
+  .metrics article, #fitMemory { color: #111827; background: transparent; }
+}

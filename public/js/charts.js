@@ -2,8 +2,6 @@
  * Kinetics Lab - Motor Gráfico Científico em Canvas Nativo
  * Renderiza gráficos interativos de alta precisão com suporte a Retina/DPI,
  * tooltips, download de PNG e tangente interativa com derivada geométrica.
- * 
- * DIRETRIZ: Sem uso de equações ou referências a Arrhenius.
  */
 
 window.KineticsCharts = (() => {
@@ -21,8 +19,6 @@ window.KineticsCharts = (() => {
     tangent: "#ff7043",
     bgCard: "#0c1729"
   };
-
-  const chartInstances = {};
 
   function setup(canvas, customPadding = {}) {
     const dpr = window.devicePixelRatio || 1;
@@ -139,6 +135,7 @@ window.KineticsCharts = (() => {
       tooltip.style.position = "absolute";
       tooltip.style.display = "none";
       tooltip.style.pointerEvents = "none";
+      tooltip.style.whiteSpace = "pre-line";
       tooltip.style.background = "rgba(7, 16, 31, 0.94)";
       tooltip.style.border = "1px solid #21d4e8";
       tooltip.style.borderRadius = "6px";
@@ -158,7 +155,7 @@ window.KineticsCharts = (() => {
       const match = getHoverData(mouseX, mouseY);
 
       if (match) {
-        tooltip.innerHTML = match.html;
+        tooltip.textContent = match.label;
         tooltip.style.display = "block";
         tooltip.style.left = `${Math.min(rect.width - 150, Math.max(10, mouseX + 14))}px`;
         tooltip.style.top = `${Math.max(10, mouseY - 30)}px`;
@@ -190,9 +187,9 @@ window.KineticsCharts = (() => {
     const rawPoints = data.rawPoints || points;
 
     const xMax = Math.max(...points.map(pt => pt.t)) * 1.05 || 1;
-    const yMax = Math.max(...points.map(pt => pt.conc)) * 1.15 || 1;
     const xMin = 0;
-    const yMin = 0;
+    const yMin = Math.min(0, ...points.map(pt => pt.conc)) * 1.15;
+    const yMax = Math.max(0, ...points.map(pt => pt.conc)) * 1.15 || (yMin === 0 ? 1 : 0);
 
     const timeUnit = options.timeUnit || "s";
     const concUnit = options.concUnit || "mol/L";
@@ -216,7 +213,7 @@ window.KineticsCharts = (() => {
       ctx.beginPath();
       const steps = 120;
       for (let i = 0; i <= steps; i++) {
-        const tVal = (xMax * i) / steps;
+        const tVal = points[0].t + (points.at(-1).t - points[0].t) * i / steps;
         const cVal = data.spline(tVal).val;
         const px = toX(tVal);
         const py = toY(cVal);
@@ -243,7 +240,7 @@ window.KineticsCharts = (() => {
       pointTargets.push({
         x: cx,
         y: cy,
-        html: `<strong>Exp #${pt.id}</strong><br>Tempo: ${pt.t} ${timeUnit}<br>[${pName}]: ${pt.conc.toFixed(4)} ${concUnit}`
+        label: `Exp #${pt.id}\nTempo: ${pt.t} ${timeUnit}\n[${pName}]: ${pt.conc.toFixed(4)} ${concUnit}`
       });
     });
 
@@ -268,7 +265,7 @@ window.KineticsCharts = (() => {
 
     const xMax = Math.max(...intervals.map(iv => iv.t2)) * 1.05 || 1;
     const allV = intervals.map(iv => iv.vReaction);
-    let yMax = Math.max(...allV) * 1.25;
+    let yMax = Math.max(0, ...allV) * 1.25;
     let yMin = Math.min(0, Math.min(...allV) * 1.25);
     if (yMax <= yMin) yMax = yMin + 1;
 
@@ -327,7 +324,7 @@ window.KineticsCharts = (() => {
       pointTargets.push({
         x: cx,
         y: cy,
-        html: `<strong>Intervalo [${iv.t1} a ${iv.t2} ${timeUnit}]</strong><br>Instante médio: ${iv.tMid.toFixed(1)} ${timeUnit}<br>v_méd = ${iv.vReaction.toFixed(6)} ${rateUnit}`
+        label: `Intervalo [${iv.t1} a ${iv.t2} ${timeUnit}]\nInstante médio: ${iv.tMid.toFixed(1)} ${timeUnit}\nv_méd = ${iv.vReaction.toFixed(6)} ${rateUnit}`
       });
     });
 
@@ -407,7 +404,7 @@ window.KineticsCharts = (() => {
 
     const xMax = Math.max(...rates.map(r => r.t)) * 1.05 || 1;
     const allV = rates.map(r => r.vReaction);
-    let yMax = Math.max(...allV) * 1.25;
+    let yMax = Math.max(0, ...allV) * 1.25;
     let yMin = Math.min(0, Math.min(...allV) * 1.25);
     if (yMax <= yMin) yMax = yMin + 1;
 
@@ -459,7 +456,7 @@ window.KineticsCharts = (() => {
       pointTargets.push({
         x: cx,
         y: cy,
-        html: `<strong>Instante: ${r.t} ${timeUnit}</strong><br>v_inst: ${r.vReaction.toFixed(6)} ${rateUnit}<br><small>${r.method}</small>`
+        label: `Instante: ${r.t} ${timeUnit}\nv_inst: ${r.vReaction.toFixed(6)} ${rateUnit}\n${r.method}`
       });
     });
 
@@ -482,9 +479,10 @@ window.KineticsCharts = (() => {
     const { ctx, w, h, p, pw, ph } = setup(canvas);
     const rates = data.instantaneous;
 
-    const xMax = Math.max(...rates.map(r => r.conc)) * 1.15 || 1;
+    const xMin = Math.min(0, ...rates.map(r => r.conc)) * 1.15;
+    const xMax = Math.max(0, ...rates.map(r => r.conc)) * 1.15 || (xMin === 0 ? 1 : 0);
     const allV = rates.map(r => r.vReaction);
-    let yMax = Math.max(...allV) * 1.25;
+    let yMax = Math.max(0, ...allV) * 1.25;
     let yMin = Math.min(0, Math.min(...allV) * 1.25);
     if (yMax <= yMin) yMax = yMin + 1;
 
@@ -494,12 +492,12 @@ window.KineticsCharts = (() => {
     const pName = options.productName || "P";
 
     drawAxes(ctx, { w, h, p, pw, ph }, {
-      xMin: 0, xMax, yMin, yMax,
+      xMin, xMax, yMin, yMax,
       xTitle: `Concentração do Produto [${pName}] (${concUnit})`,
       yTitle: `Velocidade v (${rateUnit})`
     });
 
-    const toX = (c) => p.l + (c / xMax) * pw;
+    const toX = (c) => p.l + ((c - xMin) / (xMax - xMin)) * pw;
     const toY = (v) => h - p.b - ((v - yMin) / (yMax - yMin)) * ph;
 
     // Linha conectando a evolução temporal
@@ -530,107 +528,9 @@ window.KineticsCharts = (() => {
       pointTargets.push({
         x: cx,
         y: cy,
-        html: `<strong>t = ${r.t} ${timeUnit}</strong><br>[${pName}]: ${r.conc.toFixed(4)} ${concUnit}<br>v: ${r.vReaction.toFixed(6)} ${rateUnit}`
+        label: `t = ${r.t} ${timeUnit}\n[${pName}]: ${r.conc.toFixed(4)} ${concUnit}\nv: ${r.vReaction.toFixed(6)} ${rateUnit}`
       });
     });
-
-    attachTooltip(canvas, (mx, my) => {
-      return pointTargets.find(pt => Math.hypot(pt.x - mx, pt.y - my) <= 12);
-    });
-  }
-
-  // =========================================================================
-  // GRÁFICO 5: Concentração de Reagentes e Produtos × Tempo
-  // =========================================================================
-  function drawReactantsAndProducts(canvas, data, options = {}) {
-    const { ctx, w, h, p, pw, ph } = setup(canvas);
-
-    if (!data || !data.kineticsFit || !data.kineticsFit.available) {
-      ctx.clearRect(0, 0, w, h);
-      ctx.font = "12px Inter, sans-serif";
-      ctx.fillStyle = palette.text;
-      ctx.textAlign = "center";
-      ctx.fillText("Insira a concentração inicial do reagente [A]₀ na seção de configuração", w / 2, h / 2 - 10);
-      ctx.fillText("para calcular as curvas de consumo do reagente e estequiometria.", w / 2, h / 2 + 10);
-      return;
-    }
-
-    const reactantData = data.kineticsFit.reactantData;
-    const xMax = Math.max(...reactantData.map(d => d.t)) * 1.05 || 1;
-    const yMax = Math.max(...reactantData.flatMap(d => [d.concA, d.concP])) * 1.15 || 1;
-
-    const timeUnit = options.timeUnit || "s";
-    const concUnit = options.concUnit || "mol/L";
-
-    drawAxes(ctx, { w, h, p, pw, ph }, {
-      xMin: 0, xMax, yMin: 0, yMax,
-      xTitle: `Tempo (${timeUnit})`,
-      yTitle: `Concentração (${concUnit})`
-    });
-
-    const toX = (t) => p.l + (t / xMax) * pw;
-    const toY = (c) => h - p.b - (c / yMax) * ph;
-
-    // Curva do Reagente [A] (Laranja)
-    ctx.strokeStyle = palette.orange;
-    ctx.lineWidth = 2.4;
-    ctx.beginPath();
-    reactantData.forEach((d, i) => {
-      const cx = toX(d.t);
-      const cy = toY(d.concA);
-      if (i === 0) ctx.moveTo(cx, cy);
-      else ctx.lineTo(cx, cy);
-    });
-    ctx.stroke();
-
-    // Curva do Produto [P] (Ciano)
-    ctx.strokeStyle = palette.cyan;
-    ctx.lineWidth = 2.4;
-    ctx.beginPath();
-    reactantData.forEach((d, i) => {
-      const cx = toX(d.t);
-      const cy = toY(d.concP);
-      if (i === 0) ctx.moveTo(cx, cy);
-      else ctx.lineTo(cx, cy);
-    });
-    ctx.stroke();
-
-    // Pontos
-    const pointTargets = [];
-    reactantData.forEach(d => {
-      const cx = toX(d.t);
-      const cyA = toY(d.concA);
-      const cyP = toY(d.concP);
-
-      ctx.beginPath();
-      ctx.arc(cx, cyA, 4.5, 0, Math.PI * 2);
-      ctx.fillStyle = palette.orange;
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.arc(cx, cyP, 4.5, 0, Math.PI * 2);
-      ctx.fillStyle = palette.cyan;
-      ctx.fill();
-
-      pointTargets.push({
-        x: cx,
-        y: cyA,
-        html: `<strong>t = ${d.t} ${timeUnit}</strong><br>[Reagente A]: ${d.concA.toFixed(4)} ${concUnit}`
-      });
-      pointTargets.push({
-        x: cx,
-        y: cyP,
-        html: `<strong>t = ${d.t} ${timeUnit}</strong><br>[Produto P]: ${d.concP.toFixed(4)} ${concUnit}`
-      });
-    });
-
-    // Legenda no topo
-    ctx.font = "10px Inter, sans-serif";
-    ctx.textAlign = "right";
-    ctx.fillStyle = palette.orange;
-    ctx.fillText("― [A] Reagente   ", w - p.r - 100, p.t - 10);
-    ctx.fillStyle = palette.cyan;
-    ctx.fillText("― [P] Produto", w - p.r, p.t - 10);
 
     attachTooltip(canvas, (mx, my) => {
       return pointTargets.find(pt => Math.hypot(pt.x - mx, pt.y - my) <= 12);
@@ -648,8 +548,8 @@ window.KineticsCharts = (() => {
 
     const xMin = points[0].t;
     const xMax = points[points.length - 1].t;
-    const yMin = 0;
-    const yMax = Math.max(...points.map(pt => pt.conc)) * 1.25 || 1;
+    const yMin = Math.min(0, ...points.map(pt => pt.conc)) * 1.15;
+    const yMax = Math.max(0, ...points.map(pt => pt.conc)) * 1.15 || (yMin === 0 ? 1 : 0);
 
     const timeUnit = options.timeUnit || "s";
     const concUnit = options.concUnit || "mol/L";
@@ -743,85 +643,6 @@ window.KineticsCharts = (() => {
   }
 
   // =========================================================================
-  // GRÁFICO 7: Linearização Cinética ([A], ln[A], 1/[A])
-  // =========================================================================
-  function drawKineticsLinearization(canvas, fitModel, orderType = "order1", options = {}) {
-    const { ctx, w, h, p, pw, ph } = setup(canvas);
-
-    if (!fitModel || !fitModel.available || !fitModel.models[orderType]) {
-      ctx.clearRect(0, 0, w, h);
-      ctx.font = "12px Inter, sans-serif";
-      ctx.fillStyle = palette.text;
-      ctx.textAlign = "center";
-      ctx.fillText("Dados insuficientes para ajuste linear.", w / 2, h / 2);
-      return;
-    }
-
-    const model = fitModel.models[orderType];
-    const rawData = fitModel.reactantData;
-    const timeUnit = options.timeUnit || "s";
-
-    let yLabel = "[A]";
-    let points = [];
-    if (orderType === "order0") {
-      yLabel = "[A] (mol/L)";
-      points = rawData.map(d => ({ x: d.t, y: d.concA }));
-    } else if (orderType === "order1") {
-      yLabel = "ln[A]";
-      points = rawData.map(d => ({ x: d.t, y: Math.log(Math.max(1e-12, d.concA)) }));
-    } else if (orderType === "order2") {
-      yLabel = "1/[A] (L/mol)";
-      points = rawData.map(d => ({ x: d.t, y: 1 / Math.max(1e-12, d.concA) }));
-    }
-
-    const xVals = points.map(pt => pt.x);
-    const yVals = points.map(pt => pt.y);
-    const xMin = 0;
-    const xMax = Math.max(...xVals) * 1.05 || 1;
-    const yMin = Math.min(...yVals) * 1.05;
-    const yMax = Math.max(...yVals) * 1.05;
-
-    drawAxes(ctx, { w, h, p, pw, ph }, {
-      xMin, xMax, yMin, yMax,
-      xTitle: `Tempo (${timeUnit})`,
-      yTitle: yLabel
-    });
-
-    const toX = (x) => p.l + (x / xMax) * pw;
-    const toY = (y) => h - p.b - ((y - yMin) / (yMax - yMin || 1)) * ph;
-
-    // Reta ajustada
-    const yA = model.intercept;
-    const yB = model.intercept + model.slope * xMax;
-    ctx.strokeStyle = palette.orange;
-    ctx.lineWidth = 2.2;
-    ctx.beginPath();
-    ctx.moveTo(toX(0), toY(yA));
-    ctx.lineTo(toX(xMax), toY(yB));
-    ctx.stroke();
-
-    // Pontos
-    points.forEach(pt => {
-      const cx = toX(pt.x);
-      const cy = toY(pt.y);
-
-      ctx.beginPath();
-      ctx.arc(cx, cy, 5.5, 0, Math.PI * 2);
-      ctx.fillStyle = palette.cyan;
-      ctx.fill();
-      ctx.strokeStyle = "#fff";
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-    });
-
-    // Legenda
-    ctx.textAlign = "right";
-    ctx.font = "10px Inter, sans-serif";
-    ctx.fillStyle = palette.text;
-    ctx.fillText(`${model.name} | R² = ${model.r2.toFixed(4)} | k = ${model.k.toFixed(4)} ${model.unit}`, w - p.r, p.t - 10);
-  }
-
-  // =========================================================================
   // GRÁFICO 8: Comparação Multi-Experimental (Sobreposição)
   // =========================================================================
   function drawExperimentComparison(canvas, experimentsList, options = {}) {
@@ -833,17 +654,20 @@ window.KineticsCharts = (() => {
     // Encontrar máximos globais para escala conjunta
     let xMax = 0;
     let yMax = 0;
+    let yMin = 0;
     experimentsList.forEach(exp => {
       if (exp.analysis && exp.analysis.activePoints) {
         exp.analysis.activePoints.forEach(pt => {
           if (pt.t > xMax) xMax = pt.t;
           if (pt.conc > yMax) yMax = pt.conc;
+          if (pt.conc < yMin) yMin = pt.conc;
         });
       }
     });
 
     xMax = xMax * 1.05 || 1;
-    yMax = yMax * 1.15 || 1;
+    yMin *= 1.15;
+    yMax = yMax * 1.15 || (yMin === 0 ? 1 : 0);
 
     const timeUnit = options.timeUnit || "s";
     const concUnit = options.concUnit || "mol/L";
@@ -903,9 +727,7 @@ window.KineticsCharts = (() => {
     drawAverageRateVsTime,
     drawInstantaneousVsTime,
     drawRateVsProduct,
-    drawReactantsAndProducts,
     drawInteractiveTangent,
-    drawKineticsLinearization,
     drawExperimentComparison,
     exportAsPNG
   };
