@@ -36,13 +36,15 @@
     };
   }
 
-  const state = loadState();
+  let state = loadState();
+  let demoSession;
   const current = () => state.experiments.find(exp => exp.id === state.selected) || state.experiments[0];
   const analyses = new WeakMap();
   let selectedTime;
   let activePanel = "analysis";
 
   function save() {
+    if (demoSession) return;
     try {
       localStorage.setItem(stateKey, JSON.stringify(state));
     } catch {
@@ -131,7 +133,9 @@
     const experiment = current();
     renderExperimentSelect();
     for (const [id, key] of Object.entries(settings)) byId(id).value = experiment[key];
-    byId("dataOrigin").textContent = experiment.simulated
+    byId("dataOrigin").textContent = demoSession
+      ? "Dados simulados para a demonstração."
+      : experiment.simulated
       ? "Exemplo simulado para demonstração. Substituir a série por CSV ou limpar os pontos inicia uma série cadastrada."
       : "Ensaio cadastrado. Insira as medições de tempo e concentração do produto.";
     byId("dataOrigin").classList.toggle("simulated", experiment.simulated);
@@ -175,7 +179,6 @@
     const result = analysisFor(experiment);
     byId("validationAlertBox").textContent = [...result.errors, ...result.warnings].join(" ");
     byId("experimentalResults").hidden = !result.success;
-    refreshTour();
     if (!result.success) return;
 
     const unit = rateUnit(experiment);
@@ -229,6 +232,7 @@
     byId("tangentConcDisplay").textContent = `${format(point.conc)} ${experiment.concUnit}`;
     byId("tangentSlopeDisplay").textContent = `${format(point.dPdt)} ${rateUnit(experiment)}`;
     byId("tangentVInstDisplay").textContent = `${format(point.vReaction)} ${rateUnit(experiment)}`;
+    if (tour.open && tourSteps[tourIndex].compare) describeDemoTangent(point, experiment);
   }
 
   function renderReagents() {
@@ -287,7 +291,9 @@
     byId("fitOriginNote").textContent = simulated ? "Ajuste demonstrativo com dados simulados." : "Ajuste com os ensaios cadastrados na seção experimental.";
     byId("fitOriginNote").classList.toggle("simulated", simulated);
     const names = state.reagents.map(reagentName);
-    const entries = state.experiments.filter(exp => exp.simulated === simulated).map(fitInput);
+    const entries = state.experiments.filter(exp =>
+      exp.simulated === simulated && (!demoSession || exp.example === "fit")
+    ).map(fitInput);
     const eligible = entries.filter(entry => !entry.problem);
     const fit = engine.fitInitialRateLaw(eligible, names.length);
     byId("fitTableHead").replaceChildren(tableRow([
@@ -314,7 +320,6 @@
       ? (fit.degreesOfFreedom === 0 ? "Ajuste com zero graus de liberdade residuais. Adicione ensaios para avaliar os resíduos." : `${eligible.length} ensaios usados no ajuste.`)
       : fit.error;
     byId("fitResults").hidden = !fit.success;
-    refreshTour();
     byId("comparisonPanel").hidden = eligible.length === 0;
     if (fit.success) {
       byId("fitSummary").replaceChildren(
@@ -366,16 +371,19 @@
     if (id === "analysis") drawExperimentalCharts();
     if (id === "modeling") renderFit();
     window.scrollTo(0, 0);
-    refreshTour();
+  }
+
+  function createReference() {
+    return createExperiment("Referência de velocidades", {
+      simulated: true, example: "reference",
+      points: [0, 0.12, 0.21, 0.29, 0.35, 0.40].map((conc, i) => ({ t: 10 * i, conc }))
+    });
   }
 
   function loadReference() {
     let example = state.experiments.find(exp => exp.example === "reference");
     if (!example) {
-      example = createExperiment("Referência de velocidades", {
-        simulated: true, example: "reference",
-        points: [0, 0.12, 0.21, 0.29, 0.35, 0.40].map((conc, i) => ({ t: 10 * i, conc }))
-      });
+      example = createReference();
       state.experiments.push(example);
     }
     selectExperiment(example.id);
@@ -458,76 +466,55 @@
 
   const tourSteps = [
     {
-      panel: "analysis", target: ".experiment-toolbar",
-      title: "Escolha um ensaio",
-      instructions: "Crie um ensaio para cada série de medições. Use o seletor para alternar entre os ensaios salvos neste navegador."
+      panel: "analysis", target: "#seriesTable",
+      title: "O ensaio já está preenchido",
+      instructions: "O laboratório inseriu seis medições simuladas. Aos 10 segundos, por exemplo, a concentração do produto chegou a 0,12 mol/L.",
+      next: "Ver o gráfico"
     },
     {
-      panel: "analysis", target: "#experimentSettings",
-      title: "Configure o ensaio",
-      instructions: "Informe o produto monitorado, seu coeficiente estequiométrico (ν) e as unidades de tempo e concentração usadas nas medições."
+      panel: "analysis", target: "#productVsTimeCanvas",
+      title: "O produto se acumula",
+      instructions: "Cada ponto vem da tabela. A curva sobe mais depressa no início e vai ficando mais plana. O produto continua a se formar, mas em ritmo menor.",
+      next: "Ver as velocidades"
     },
     {
-      panel: "analysis", target: "#seriesActions",
-      title: "Insira os dados",
-      instructions: "Edite as linhas da tabela, cole duas colunas de uma planilha ou importe um CSV. Para estimar a velocidade inicial, inclua a medição em t = 0."
+      panel: "analysis", target: "#experimentalResults .metrics",
+      title: "A reação começa mais rápida",
+      instructions: "Nos primeiros 10 s, a concentração sobe 0,12 mol/L. Dividindo por 10 s, o laboratório estima a velocidade inicial em 0,012 mol/(L·s). A média dos 50 s cai para 0,008 mol/(L·s).",
+      next: "Testar a tangente"
     },
     {
-      panel: "analysis", target: "#experimentalResults .metrics", fallback: "#seriesActions",
-      title: "Confira as velocidades",
-      instructions: "Veja a média global, a estimativa inicial e as tabelas por intervalo e por instante. Os gráficos e a memória de cálculo aparecem abaixo.",
-      empty: "Preencha dois ou mais pares de tempo e concentração, ou carregue um exemplo simulado para ver o cálculo.",
-      example: "Carregar série simulada"
+      panel: "analysis", target: "#tangentCanvas", compare: true,
+      title: "Veja a velocidade em um instante",
+      next: "Ajustar a lei de velocidade"
     },
     {
-      panel: "analysis", target: ".tangent-widget", fallback: "#seriesActions",
-      title: "Explore a reta tangente",
-      instructions: "Mova o controle deslizante ou escolha um tempo medido. Compare a inclinação da tangente com a velocidade da reação, que é a inclinação dividida por ν.",
-      empty: "A tangente fica disponível quando o ensaio tem uma série válida.",
-      example: "Carregar série simulada"
+      panel: "modeling", target: "#fitSummary", fit: true,
+      title: "Qual reagente muda mais a velocidade?",
+      instructions: "O laboratório comparou cinco ensaios. Neste exemplo, dobrar A dobra a velocidade inicial. Dobrar B quadruplica a velocidade inicial. Em cada comparação, a concentração do outro reagente fica fixa.",
+      next: "Ver opções de exportação"
     },
     {
-      panel: "modeling", target: "#reagentList",
-      title: "Defina os reagentes",
-      instructions: "Cadastre aqui os reagentes da mesma reação. Volte à tela experimental para preencher as concentrações iniciais de cada ensaio em mol/L."
-    },
-    {
-      panel: "modeling", target: "#fitResults", fallback: "#fitStatus",
-      title: "Determine a lei de velocidade",
-      instructions: "O ajuste usa as velocidades iniciais dos ensaios para estimar as ordens e a constante cinética. Confira quais ensaios entraram na tabela e veja o diagnóstico do ajuste.",
-      empty: "Para p reagentes, o ajuste precisa de pelo menos p + 1 ensaios válidos com concentrações iniciais que variem de forma independente.",
-      example: "Carregar conjunto simulado"
-    },
-    {
-      panel: "reports", target: "#reports .actions",
-      title: "Exporte os resultados",
-      instructions: "Baixe os dados e as velocidades do ensaio selecionado em CSV ou imprima o relatório em PDF. Você pode reabrir este guia na barra superior."
+      panel: "reports", target: "#reports .actions", fit: true,
+      title: "Leve os resultados com você",
+      instructions: "Baixe a série simulada ou as velocidades calculadas em CSV. Você também pode imprimir o relatório ou salvá-lo como PDF.",
+      next: "Concluir demonstração"
     }
   ];
   const tour = byId("firstAccessTour");
+  const demoControls = document.querySelectorAll([
+    ".sidebar nav", ".experiment-toolbar", "#experimentSettings", "#initialConcentrations",
+    "[data-open]", "#seriesActions", "#pasteBoxWrap", "#dataTableTbody",
+    "#reagentList", "#modeling .actions", "#fitTableBody"
+  ].join(","));
   let tourIndex = 0;
   let tourTarget;
 
-  function refreshTour(scroll = false) {
-    if (!tour.open) return;
-    const step = tourSteps[tourIndex];
-    const target = $(step.target);
-    const available = !target.closest("[hidden]");
-    const example = byId("tourExample");
-    const showExample = Boolean(step.example) && !available && activePanel === step.panel;
-    const instructions = showExample ? `${step.instructions} ${step.empty}` : step.instructions;
-    if (byId("tourInstructions").textContent !== instructions) {
-      byId("tourInstructions").textContent = instructions;
-    }
-    example.hidden = !showExample;
-    example.textContent = step.example || "";
-    const nextTarget = activePanel === step.panel ? (available ? target : $(step.fallback)) : null;
-    if (tourTarget !== nextTarget) {
-      tourTarget?.classList.remove("tour-target");
-      tourTarget = nextTarget;
-      tourTarget?.classList.add("tour-target");
-    }
-    if (scroll) tourTarget?.scrollIntoView({ block: "start" });
+  function describeDemoTangent(point, experiment) {
+    const comparison = point.t >= 25 ? "10 s" : "40 s";
+    byId("tourInstructions").textContent =
+      `Aos ${format(point.t)} s, a velocidade é ${format(point.vReaction)} ${rateUnit(experiment)}. Compare os instantes. A reta mais plana indica uma reação mais lenta.`;
+    byId("tourCompare").textContent = `Comparar com ${comparison}`;
   }
 
   function showTourStep(index) {
@@ -535,14 +522,38 @@
     const step = tourSteps[index];
     byId("tourProgress").textContent = `Passo ${index + 1} de ${tourSteps.length}`;
     byId("tourTitle").textContent = step.title;
+    byId("tourInstructions").textContent = step.instructions || "";
+    byId("tourCompare").hidden = !step.compare;
     byId("tourPrevious").disabled = index === 0;
-    byId("tourNext").textContent = index === tourSteps.length - 1 ? "Concluir" : "Avançar";
+    byId("tourNext").textContent = step.next;
+
+    if (step.fit && current().example !== "fit") {
+      loadSimulatedGroup();
+    } else if (!step.fit && current().example !== "reference") {
+      loadReference();
+    }
     if (activePanel !== step.panel) openPanel(step.panel);
-    refreshTour(true);
+    if (step.compare) {
+      selectedTime = 10;
+      drawTangent();
+    }
+    tourTarget?.classList.remove("tour-target");
+    tourTarget = $(step.target);
+    tourTarget.classList.add("tour-target");
+    tourTarget.scrollIntoView({ block: "start", behavior: "instant" });
   }
 
   bind("firstAccessBtn", "click", () => {
-    if (!tour.open) {
+    if (!demoSession) {
+      demoSession = { state, activePanel, selectedTime, scrollY: window.scrollY, importStatus: byId("importStatus").textContent };
+      const first = createReference();
+      state = {
+        experiments: [first], selected: first.id, fitOrigin: "simulated",
+        reagents: [{ id: newId(), name: "A" }, { id: newId(), name: "B" }]
+      };
+      demoControls.forEach(control => { control.inert = true; });
+      renderReagents();
+      selectExperiment(first.id);
       tour.show();
       byId("firstAccessBtn").setAttribute("aria-expanded", "true");
       showTourStep(0);
@@ -558,19 +569,24 @@
     if (tourIndex === 0) byId("tourNext").focus({ preventScroll: true });
   });
   bind("tourClose", "click", () => tour.close());
-  bind("tourExample", "click", () => {
-    if (tourSteps[tourIndex].panel === "modeling") {
-      loadSimulatedGroup();
-      renderFit();
-    } else {
-      loadReference();
-    }
-    refreshTour(true);
-    byId("tourNext").focus({ preventScroll: true });
+  bind("tourCompare", "click", () => {
+    selectedTime = selectedTime >= 25 ? 10 : 40;
+    drawTangent();
   });
   tour.addEventListener("close", () => {
     tourTarget?.classList.remove("tour-target");
     tourTarget = null;
+    const previous = demoSession;
+    demoSession = undefined;
+    state = previous.state;
+    selectedTime = previous.selectedTime;
+    demoControls.forEach(control => { control.inert = false; });
+    byId("importStatus").textContent = previous.importStatus;
+    renderReagents();
+    renderEditor();
+    renderAnalysis();
+    openPanel(previous.activePanel);
+    window.scrollTo({ top: previous.scrollY, behavior: "instant" });
     byId("firstAccessBtn").setAttribute("aria-expanded", "false");
     byId("firstAccessBtn").focus({ preventScroll: true });
   });

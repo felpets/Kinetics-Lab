@@ -78,7 +78,7 @@
           <button id="applyPasteBtn" class="btn btn-primary">Aplicar dados</button>
         </div>
         <p id="importStatus" role="status"></p>
-        <div class="table-wrapper">
+        <div id="seriesTable" class="table-wrapper">
           <table class="kinetics-table">
             <thead><tr><th>Ponto</th><th id="timeHeading">Tempo (s)</th><th id="concentrationHeading">Concentração do produto (mol/L)</th><th>Ação</th></tr></thead>
             <tbody id="dataTableTbody"></tbody>
@@ -163,7 +163,7 @@
 
           <div class="tangent-widget">
             <div class="tangent-header"><h3>Tangente à curva de concentração</h3><p>Arraste o controle para escolher um instante. Use a lista para selecionar um tempo medido.</p></div>
-            <canvas id="tangentCanvas" style="height: 310px;" aria-label="Tangente à curva de concentração do produto"></canvas>
+            <canvas id="tangentCanvas" aria-label="Tangente à curva de concentração do produto"></canvas>
             <div class="tangent-slider-wrap">
               <label for="tangentTimeSlider">Instante da tangente <strong id="tangentSelectedTimeDisplay"></strong></label>
               <input type="range" id="tangentTimeSlider" min="0" max="50" step="any">
@@ -245,13 +245,14 @@
   <dialog id="firstAccessTour" class="access-tour" aria-labelledby="tourTitle" aria-describedby="tourInstructions">
     <div class="access-tour-header">
       <span id="tourProgress" class="eyebrow"></span>
-      <button id="tourClose" type="button" class="btn btn-sm">Sair do guia</button>
+      <button id="tourClose" type="button" class="btn btn-sm">Sair da demonstração</button>
     </div>
     <div aria-live="polite" aria-atomic="true">
       <h2 id="tourTitle"></h2>
-      <p id="tourInstructions"></p>
+      <p id="tourInstructions" aria-live="polite"></p>
+      <p class="tour-note">Os dados simulados são temporários. Seus ensaios ficam salvos.</p>
     </div>
-    <button id="tourExample" type="button" class="btn btn-sm" hidden></button>
+    <button id="tourCompare" type="button" class="btn btn-sm" hidden></button>
     <div class="access-tour-actions">
       <button id="tourPrevious" type="button" class="btn">Voltar</button>
       <button id="tourNext" type="button" class="btn btn-primary">Avançar</button>
