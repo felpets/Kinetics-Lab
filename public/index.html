@@ -242,22 +242,26 @@
     </section>
   </main>
 
+  <div id="tourSpotlight" class="tour-spotlight" aria-hidden="true" hidden></div>
   <dialog id="firstAccessTour" class="access-tour" aria-labelledby="tourTitle" aria-describedby="tourInstructions">
-    <div class="access-tour-header">
-      <span id="tourProgress" class="eyebrow"></span>
-      <button id="tourClose" type="button" class="btn btn-sm">Sair da demonstração</button>
-    </div>
-    <div aria-live="polite" aria-atomic="true">
-      <h2 id="tourTitle"></h2>
-      <p id="tourInstructions"></p>
-    </div>
-    <div class="access-tour-footer">
-      <p class="tour-note">Demonstração com dados simulados</p>
+    <div class="access-tour-content">
+      <div class="access-tour-header">
+        <span id="tourProgress" class="eyebrow"></span>
+        <button id="tourClose" type="button" class="btn tour-close" aria-label="Sair da demonstração">×</button>
+      </div>
+      <progress id="tourMeter" class="tour-meter" aria-label="Progresso do tour"></progress>
+      <div aria-live="polite" aria-atomic="true">
+        <h2 id="tourTitle"></h2>
+        <p id="tourInstructions"></p>
+      </div>
+      <div class="access-tour-tools">
+        <button id="tourPlayback" type="button" class="btn btn-sm" hidden>Pausar</button>
+        <button id="tourCompare" type="button" class="btn btn-sm" hidden></button>
+      </div>
       <div class="access-tour-actions">
-        <button id="tourPlayback" type="button" class="btn">Pausar</button>
-        <button id="tourCompare" type="button" class="btn" hidden></button>
+        <button id="tourAuto" type="button" class="btn">Reproduzir tudo</button>
         <button id="tourPrevious" type="button" class="btn">Voltar</button>
-        <button id="tourNext" type="button" class="btn btn-primary">Avançar</button>
+        <button id="tourNext" type="button" class="btn btn-primary">Iniciar tour</button>
       </div>
     </div>
   </dialog>

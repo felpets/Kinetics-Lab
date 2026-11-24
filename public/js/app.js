@@ -232,7 +232,7 @@
     byId("tangentConcDisplay").textContent = `${format(point.conc)} ${experiment.concUnit}`;
     byId("tangentSlopeDisplay").textContent = `${format(point.dPdt)} ${rateUnit(experiment)}`;
     byId("tangentVInstDisplay").textContent = `${format(point.vReaction)} ${rateUnit(experiment)}`;
-    if (tour.open && tourSteps[tourIndex].compare) describeDemoTangent(point, experiment);
+    if (tour.open && tourSteps[tourIndex]?.compare) describeDemoTangent(point, experiment);
   }
 
   function renderReagents() {
@@ -502,13 +502,16 @@
     }
   ];
   const tour = byId("firstAccessTour");
+  const spotlight = byId("tourSpotlight");
   const demoControls = document.querySelectorAll([
     ".sidebar nav", ".experiment-toolbar", "#experimentSettings", "#initialConcentrations",
     "[data-open]", "#seriesActions", "#pasteBoxWrap", "#dataTableTbody",
     "#reagentList", "#modeling .actions", "#fitTableBody"
   ].join(","));
-  let tourIndex = 0;
+  let tourIndex = -1;
   let tourTarget;
+  let tourFocus;
+  let tourAutoplay = false;
   let tourPlaying = false;
   let tourQueue = [];
   let tourTimer;
@@ -537,13 +540,74 @@
 
   function setTourPlaying(playing) {
     tourPlaying = playing;
-    byId("tourPlayback").textContent = tourIndex === tourSteps.length - 1
+    const playback = byId("tourPlayback");
+    const finished = tourIndex === tourSteps.length - 1;
+    playback.hidden = tourIndex < 0 || (tourIndex > 0 && !finished && !tourAutoplay);
+    playback.textContent = finished || (tourIndex === 0 && !tourQueue.length)
       ? "Rever" : (playing ? "Pausar" : "Reproduzir");
     if (playing) runTourQueue();
     else stopTourTimer();
   }
 
+  function tourViewport() {
+    return {
+      left: 14, right: document.documentElement.clientWidth - 14,
+      top: $(".topbar").getBoundingClientRect().bottom + 12,
+      bottom: window.innerHeight - (window.matchMedia("(max-width: 680px)").matches ? 64 : 14)
+    };
+  }
+
+  function centerTour() {
+    spotlight.classList.add("is-scrim");
+    spotlight.removeAttribute("style");
+    tour.removeAttribute("style");
+    tour.dataset.placement = "center";
+  }
+
+  function positionTour() {
+    if (!tour.open) return;
+    const target = tourFocus || tourTarget;
+    if (!target?.isConnected) return centerTour();
+    const boundary = tourViewport();
+    const rect = target.getBoundingClientRect();
+    const left = Math.max(boundary.left, rect.left - 5);
+    const right = Math.min(boundary.right, rect.right + 5);
+    const top = Math.max(boundary.top, rect.top - 5);
+    const bottom = Math.min(boundary.bottom, rect.bottom + 5);
+    if (right <= left || bottom <= top) return centerTour();
+
+    spotlight.classList.remove("is-scrim");
+    Object.assign(spotlight.style, { left: `${left}px`, top: `${top}px`, width: `${right - left}px`, height: `${bottom - top}px` });
+
+    const gap = 16;
+    const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
+    if (tour.dataset.placement === "center") tour.dataset.placement = "overlap";
+    const { offsetWidth: width, offsetHeight: height } = tour;
+    const centerX = (left + right) / 2;
+    const centerY = (top + bottom) / 2;
+    const alignedX = clamp(centerX - width / 2, boundary.left, boundary.right - width);
+    const alignedY = clamp(centerY - height / 2, boundary.top, boundary.bottom - height);
+    const candidates = [
+      { placement: "right", x: right + gap, y: alignedY },
+      { placement: "below", x: alignedX, y: bottom + gap },
+      { placement: "above", x: alignedX, y: top - gap - height },
+      { placement: "left", x: left - gap - width, y: alignedY }
+    ];
+    const { placement, x, y } = candidates.find(card =>
+      card.x >= boundary.left && card.x + width <= boundary.right &&
+      card.y >= boundary.top && card.y + height <= boundary.bottom
+    ) || { placement: "overlap", x: alignedX, y: Math.max(boundary.top, boundary.bottom - height) };
+    const horizontal = placement === "above" || placement === "below";
+    tour.dataset.placement = placement;
+    tour.style.left = `${x}px`;
+    tour.style.top = `${y}px`;
+    tour.style.setProperty("--tour-arrow", `${horizontal
+      ? clamp(centerX - x, 18, width - 18)
+      : clamp(centerY - y, 18, height - 18)}px`);
+  }
+
   function clearTourHighlight() {
+    tourFocus = undefined;
     if (!tourTarget) return;
     tourTarget.querySelector(".tour-typing")?.classList.remove("tour-typing");
     tourTarget.classList.remove("tour-target");
@@ -555,6 +619,17 @@
     tourTarget = $(selector);
     tourTarget.classList.add("tour-target");
     tourTarget.scrollIntoView({ block: "start", behavior: "instant" });
+    positionTour();
+  }
+
+  function spotlightField(input) {
+    tourFocus = input.closest(".config-group, tr");
+    const { top, bottom } = tourFocus.getBoundingClientRect();
+    const viewport = tourViewport();
+    const limit = Math.max(viewport.top + 75, viewport.bottom - tour.offsetHeight - 26);
+    if (top < viewport.top) window.scrollBy({ top: top - viewport.top - 8, behavior: "instant" });
+    else if (bottom > limit) window.scrollBy({ top: bottom - limit, behavior: "instant" });
+    positionTour();
   }
 
   function showTourReference() {
@@ -573,15 +648,14 @@
     selectExperiment(draft.id);
     byId("validationAlertBox").textContent = "";
     highlightTourTarget("#experimentSettings");
+    spotlightField(byId("expNameInp"));
     const queue = (delay, run) => tourQueue.push({ delay, run });
 
     function typeValue(getInput, record, field, value) {
       queue(180, () => {
         const input = getInput();
         input.classList.add("tour-typing");
-        const bottom = input.getBoundingClientRect().bottom;
-        const limit = tour.getBoundingClientRect().top - 18;
-        if (bottom > limit) window.scrollBy({ top: bottom - limit, behavior: "instant" });
+        spotlightField(input);
       });
       [...value].forEach((char, i) => {
         queue(65, () => {
@@ -605,6 +679,7 @@
       if (index >= 2) queue(120, () => {
         draft.points.push(row);
         renderInputTable();
+        spotlightField($(`#dataTableTbody tr[data-index="${index}"] input`));
       });
       const input = field => () => $(`#dataTableTbody tr[data-index="${index}"] [data-field="${field}"]`);
       typeValue(input("t"), row, "t", format(point.t));
@@ -614,8 +689,10 @@
       showTourReference();
       byId("tourTitle").textContent = "A tabela está pronta";
       byId("tourInstructions").textContent = "Com as seis medições, o laboratório já pode traçar o gráfico e calcular as velocidades.";
+      highlightTourTarget(tableSelector);
+      if (!tourAutoplay) setTourPlaying(false);
     });
-    queue(4200, () => showTourStep(1));
+    if (tourAutoplay) queue(4200, () => showTourStep(1));
   }
 
   function describeDemoTangent(point, experiment) {
@@ -632,9 +709,12 @@
     tourIndex = index;
     const step = tourSteps[index];
     byId("tourProgress").textContent = `Passo ${index + 1} de ${tourSteps.length}`;
+    byId("tourMeter").value = index + 1;
     byId("tourTitle").textContent = step.title;
     byId("tourInstructions").textContent = step.instructions || "";
     byId("tourCompare").hidden = !step.compare;
+    byId("tourAuto").hidden = true;
+    byId("tourPrevious").hidden = false;
     byId("tourPrevious").disabled = index === 0;
     byId("tourNext").textContent = step.next;
 
@@ -649,41 +729,75 @@
       if (step.compare) {
         selectedTime = 10;
         drawTangent();
-        tourQueue.push({ delay: 5500, run: () => { selectedTime = 40; drawTangent(); } });
+        if (tourAutoplay) tourQueue.push({ delay: 5500, run: () => { selectedTime = 40; drawTangent(); } });
       }
       highlightTourTarget(step.target);
-      if (step.duration) tourQueue.push({ delay: step.duration - (step.compare ? 5500 : 0), run: () => showTourStep(index + 1) });
+      if (tourAutoplay && step.duration) {
+        tourQueue.push({ delay: step.duration - (step.compare ? 5500 : 0), run: () => showTourStep(index + 1) });
+      }
     }
     setTourPlaying(tourPlaying && index < tourSteps.length - 1);
+    positionTour();
+  }
+
+  function beginTour(autoplay) {
+    const first = demoSession.reference;
+    state = {
+      experiments: [first], selected: first.id, fitOrigin: "simulated",
+      reagents: [{ id: newId(), name: "A" }, { id: newId(), name: "B" }]
+    };
+    $("main").inert = false;
+    tour.removeAttribute("aria-modal");
+    demoControls.forEach(control => { control.inert = true; });
+    renderReagents();
+    byId("tourMeter").hidden = false;
+    tourAutoplay = autoplay;
+    tourPlaying = autoplay || !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    showTourStep(0);
+    byId("tourNext").focus({ preventScroll: true });
   }
 
   bind("firstAccessBtn", "click", () => {
     if (!demoSession) {
-      const first = createReference();
-      demoSession = { state, activePanel, selectedTime, scrollY: window.scrollY, importStatus: byId("importStatus").textContent, reference: first };
-      state = {
-        experiments: [first], selected: first.id, fitOrigin: "simulated",
-        reagents: [{ id: newId(), name: "A" }, { id: newId(), name: "B" }]
+      demoSession = {
+        state, activePanel, selectedTime, scrollY: window.scrollY,
+        importStatus: byId("importStatus").textContent, reference: createReference()
       };
-      demoControls.forEach(control => { control.inert = true; });
-      renderReagents();
-      tour.show();
+      tourIndex = -1;
+      $("main").inert = true;
+      $(".topbar").inert = true;
+      $(".sidebar nav").inert = true;
+      byId("tourProgress").textContent = "Primeiro acesso";
+      byId("tourMeter").max = tourSteps.length;
+      byId("tourMeter").hidden = true;
+      byId("tourTitle").textContent = "Seu primeiro ensaio no Kinetics Lab";
+      byId("tourInstructions").textContent = "Veja um ensaio simulado ganhar forma, da digitação das medições aos gráficos e à lei de velocidade. Seus ensaios salvos ficam disponíveis quando você sair.";
+      byId("tourPrevious").hidden = true;
+      byId("tourCompare").hidden = true;
+      byId("tourPlayback").hidden = true;
+      byId("tourAuto").hidden = false;
+      byId("tourNext").textContent = "Iniciar tour";
       byId("firstAccessBtn").setAttribute("aria-expanded", "true");
-      tourPlaying = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      showTourStep(0);
+      tour.setAttribute("aria-modal", "true");
+      centerTour();
+      spotlight.hidden = false;
+      tour.show();
     }
-    byId("tourPlayback").focus({ preventScroll: true });
+    byId("tourNext").focus({ preventScroll: true });
   });
   bind("tourNext", "click", () => {
-    if (tourIndex === tourSteps.length - 1) tour.close();
+    if (tourIndex < 0) beginTour(false);
+    else if (tourIndex === tourSteps.length - 1) tour.close();
     else showTourStep(tourIndex + 1);
   });
+  bind("tourAuto", "click", () => beginTour(true));
   bind("tourPrevious", "click", () => {
+    if (tourIndex === 1 && !tourAutoplay) tourPlaying = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     showTourStep(tourIndex - 1);
     if (tourIndex === 0) byId("tourPlayback").focus({ preventScroll: true });
   });
   bind("tourPlayback", "click", () => {
-    if (tourIndex === tourSteps.length - 1) {
+    if (tourIndex === tourSteps.length - 1 || (tourIndex === 0 && !tourQueue.length)) {
       tourPlaying = true;
       showTourStep(0);
     } else {
@@ -698,17 +812,20 @@
   });
   for (const event of ["pointerdown", "input", "change"]) {
     $(".tangent-widget").addEventListener(event, () => {
-      if (tour.open && tourSteps[tourIndex].compare) setTourPlaying(false);
+      if (tour.open && tourSteps[tourIndex]?.compare) setTourPlaying(false);
     });
   }
   tour.addEventListener("close", () => {
     setTourPlaying(false);
     tourQueue = [];
     clearTourHighlight();
+    spotlight.hidden = true;
     const previous = demoSession;
     demoSession = undefined;
     state = previous.state;
     selectedTime = previous.selectedTime;
+    $("main").inert = false;
+    $(".topbar").inert = false;
     demoControls.forEach(control => { control.inert = false; });
     byId("importStatus").textContent = previous.importStatus;
     renderReagents();
@@ -724,6 +841,9 @@
     event.preventDefault();
     tour.close();
   });
+  new ResizeObserver(positionTour).observe(tour);
+  window.addEventListener("scroll", positionTour, { passive: true });
+  window.addEventListener("resize", positionTour);
 
 
   $(".sidebar nav").addEventListener("click", event => {
