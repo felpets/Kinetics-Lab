@@ -516,3 +516,45 @@ canvas { width: 100%; height: 270px; display: block; }
   .simulated { color: #111827 !important; }
   .metrics article, #fitMemory { color: #111827; background: transparent; }
 }
+
+/* Guia de primeiro acesso */
+#firstAccessBtn { white-space: nowrap; }
+.access-tour {
+  position: fixed;
+  inset: auto max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) auto;
+  z-index: 100;
+  width: min(370px, calc(100vw - 32px));
+  max-height: min(72dvh, calc(100dvh - 92px));
+  margin: 0;
+  overflow-y: auto;
+  padding: 16px;
+  color: var(--text);
+  background: #101d31;
+  border: 1px solid var(--cyan);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 40px #070f20b3;
+}
+.access-tour h2 { margin: 10px 0 5px; font-size: 18px; }
+.access-tour p { margin: 0 0 12px; color: var(--text-dim); }
+.access-tour-header, .access-tour-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.access-tour-actions { margin-top: 10px; justify-content: flex-end; }
+.access-tour :disabled { opacity: .5; cursor: default; }
+.tour-target {
+  outline: 2px dashed var(--cyan);
+  outline-offset: 4px;
+  scroll-margin-top: 88px;
+}
+body:has(.access-tour[open]) main { padding-bottom: min(460px, 68dvh); }
+
+@media (max-width: 680px) {
+  .access-tour { inset: auto 12px max(64px, calc(56px + env(safe-area-inset-bottom))) 12px; width: auto; }
+}
+@media print {
+  .access-tour { display: none !important; }
+  .tour-target { outline: none; }
+}

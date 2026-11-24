@@ -19,7 +19,10 @@
       <span class="brandmark">K</span>
       <div><strong>Kinetics Lab</strong><small>Laboratório Virtual de Análise Cinética Experimental</small></div>
     </div>
-    <div class="topmeta"><span class="model-badge">Diferenciação numérica e velocidades iniciais</span></div>
+    <div class="topmeta">
+      <span class="model-badge">Diferenciação numérica e velocidades iniciais</span>
+      <button id="firstAccessBtn" type="button" class="btn btn-primary btn-sm" aria-controls="firstAccessTour" aria-expanded="false" aria-haspopup="dialog">Primeiro acesso</button>
+    </div>
   </header>
   <aside class="sidebar">
     <nav aria-label="Módulos">
@@ -52,7 +55,7 @@
           <button id="simulatedGroup" class="btn">Carregar conjunto simulado para regressão</button>
         </div>
         <p id="dataOrigin" class="origin" role="status"></p>
-        <div class="config-grid">
+        <div id="experimentSettings" class="config-grid">
           <div class="config-group"><label for="expNameInp">Nome do ensaio</label><input id="expNameInp" type="text" maxlength="80"></div>
           <div class="config-group"><label for="productNameInp">Produto monitorado</label><input id="productNameInp" type="text" maxlength="25" placeholder="P"></div>
           <div class="config-group"><label for="nuInp">Coeficiente do produto (ν)</label><input id="nuInp" type="text" inputmode="decimal"></div>
@@ -62,7 +65,7 @@
         <h2>Concentrações iniciais dos reagentes</h2>
         <p>Defina os reagentes em <button class="text-button" data-open="modeling">Lei de velocidade</button>. As concentrações iniciais são registradas em mol/L.</p>
         <div id="initialConcentrations" class="config-grid"></div>
-        <div class="actions experiment-actions">
+        <div id="seriesActions" class="actions experiment-actions">
           <button id="addRowBtn" class="btn btn-primary">Adicionar linha</button>
           <label class="btn file-button">Importar CSV <input id="csvFileInput" type="file" accept=".csv,.txt,text/csv"></label>
           <button id="togglePasteBoxBtn" class="btn" aria-expanded="false" aria-controls="pasteBoxWrap">Colar dados</button>
@@ -238,6 +241,23 @@
       </div>
     </section>
   </main>
+
+  <dialog id="firstAccessTour" class="access-tour" aria-labelledby="tourTitle" aria-describedby="tourInstructions">
+    <div class="access-tour-header">
+      <span id="tourProgress" class="eyebrow"></span>
+      <button id="tourClose" type="button" class="btn btn-sm">Sair do guia</button>
+    </div>
+    <div aria-live="polite" aria-atomic="true">
+      <h2 id="tourTitle"></h2>
+      <p id="tourInstructions"></p>
+    </div>
+    <button id="tourExample" type="button" class="btn btn-sm" hidden></button>
+    <div class="access-tour-actions">
+      <button id="tourPrevious" type="button" class="btn">Voltar</button>
+      <button id="tourNext" type="button" class="btn btn-primary">Avançar</button>
+    </div>
+  </dialog>
+
 
   <script src="/js/kinetics-engine.js"></script>
   <script src="/js/charts.js"></script>
