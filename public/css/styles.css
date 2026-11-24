@@ -583,14 +583,13 @@ canvas { width: 100%; height: 270px; display: block; }
 .access-tour h2 { margin: 11px 0 6px; font-size: clamp(19px, 3vw, 24px); line-height: 1.2; }
 .access-tour[data-placement="center"] h2 { font-size: clamp(24px, 4vw, 32px); }
 .access-tour p { margin: 0; font-size: 15px; line-height: 1.45; color: var(--text-dim); }
-.access-tour-header, .access-tour-actions, .access-tour-tools {
+.access-tour-header, .access-tour-actions {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 .access-tour-header { justify-content: space-between; }
 .access-tour-actions { margin-top: 13px; justify-content: flex-end; flex-wrap: wrap; }
-.access-tour-tools:has(button:not([hidden])) { margin-top: 10px; }
 .access-tour .tour-close { display: grid; place-items: center; padding: 0; width: 30px; height: 30px; font-size: 20px; line-height: 1; }
 .tour-meter { display: block; width: 100%; height: 4px; margin-top: 8px; border: 0; border-radius: 8px; overflow: hidden; appearance: none; }
 .tour-meter::-webkit-progress-bar { background: #2a405a; }
@@ -609,12 +608,12 @@ body:has(.access-tour[open]) main { padding-bottom: min(460px, 68dvh); }
   .access-tour-content, .access-tour[data-placement="center"] .access-tour-content { padding: 12px 14px; }
   .access-tour p { font-size: 14px; }
   .access-tour-actions .btn { padding: 7px 9px; }
-  .tour-target#seriesTable th { white-space: normal; }
+  .tour-target .kinetics-table th { white-space: normal; }
   .tour-target#seriesTable th:last-child, .tour-target#seriesTable td:last-child { display: none; }
   .tour-target#seriesTable input { min-width: 0; }
-  body:has(.access-tour[open]) :is(#productVsTimeCanvas, #tangentCanvas) { height: clamp(140px, calc(100dvh - 440px), 235px); }
-  body:has(.access-tour[open]) .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  body:has(.access-tour[open]) .metrics article { min-width: 0; padding: 8px; }
+  #fitExperimentTable.tour-target, .tour-target:is(#averageRatesTable, #instantaneousRatesTable) .table-wrapper {
+    max-height: clamp(140px, calc(100dvh - 475px), 300px);
+  }
 }
 @media print {
   .access-tour, .tour-spotlight { display: none !important; }

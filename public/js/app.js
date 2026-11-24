@@ -232,7 +232,6 @@
     byId("tangentConcDisplay").textContent = `${format(point.conc)} ${experiment.concUnit}`;
     byId("tangentSlopeDisplay").textContent = `${format(point.dPdt)} ${rateUnit(experiment)}`;
     byId("tangentVInstDisplay").textContent = `${format(point.vReaction)} ${rateUnit(experiment)}`;
-    if (tour.open && tourSteps[tourIndex]?.compare) describeDemoTangent(point, experiment);
   }
 
   function renderReagents() {
@@ -466,23 +465,19 @@
 
   const tourResultSteps = [
     {
-      panel: "analysis", target: "#productVsTimeCanvas",
-      title: "O produto se acumula",
-      instructions: "Cada ponto vem da tabela. A curva sobe mais depressa no início e vai ficando mais plana. O produto continua a se formar, mas em ritmo menor."
+      panel: "analysis", target: "#averageRatesTable",
+      title: "Velocidade média por intervalo",
+      instructions: "Cada linha resume o intervalo entre duas medições. Ela mostra o ponto médio do intervalo, a variação da concentração do produto e a velocidade média da reação nesse período."
     },
     {
-      panel: "analysis", target: "#experimentalResults .metrics",
-      title: "A reação começa mais rápida",
-      instructions: "Nos primeiros 10 s, a concentração sobe 0,12 mol/L. Dividindo por 10 s, o laboratório estima a velocidade inicial em 0,012 mol/(L·s). A média dos 50 s cai para 0,008 mol/(L·s)."
+      panel: "analysis", target: "#instantaneousRatesTable",
+      title: "Velocidade instantânea",
+      instructions: "Cada linha corresponde ao instante de uma medição. A tabela reúne a concentração do produto, a velocidade estimada naquele instante e o método de cálculo."
     },
     {
-      panel: "analysis", target: "#tangentCanvas", compare: true,
-      title: "Veja a velocidade em um instante"
-    },
-    {
-      panel: "modeling", target: "#fitSummary", fit: true,
-      title: "Qual reagente muda mais a velocidade?",
-      instructions: "O laboratório comparou cinco ensaios. Neste exemplo, dobrar A dobra a velocidade inicial. Dobrar B quadruplica a velocidade inicial. Em cada comparação, a concentração do outro reagente fica fixa."
+      panel: "modeling", target: "#fitExperimentTable", fit: true,
+      title: "Ensaios usados na lei de velocidade",
+      instructions: "Cada linha resume um ensaio. A tabela reúne as concentrações iniciais dos reagentes, a velocidade inicial estimada pelas medições e a prevista pelo ajuste. A coluna Situação indica quais ensaios entraram no cálculo."
     },
     {
       panel: "reports", target: "#reports .actions", fit: true,
@@ -494,28 +489,21 @@
   function createTourSteps(reference) {
     const configuration = [
       { id: "expNameInp", title: "Nome do ensaio", instructions: "O nome ajuda a encontrar esta série quando houver mais de um ensaio no laboratório." },
-      { id: "productNameInp", title: "Produto monitorado", instructions: "Usamos P para identificar o produto cuja concentração será medida ao longo do tempo." },
-      { id: "nuInp", title: "Coeficiente do produto", instructions: "O coeficiente vem da equação balanceada. Como vale 1 neste exemplo, a velocidade da reação é igual à taxa de formação do produto." }
+      { id: "productNameInp", title: "Produto monitorado", instructions: "Este campo identifica o produto cuja concentração será medida ao longo do ensaio." },
+      { id: "nuInp", title: "Coeficiente do produto", instructions: "O laboratório usa o coeficiente da equação balanceada para converter a taxa de formação do produto em velocidade da reação." }
     ].map(({ id, title, instructions }) => ({
       panel: "analysis", target: "#experimentSettings", title, instructions,
-      entry: { input: `#${id}`, key: settings[id], value: reference[settings[id]] }
+      entries: [{ input: `#${id}`, key: settings[id], value: reference[settings[id]] }]
     }));
-    const measurements = reference.points.flatMap((point, row) => [
-      {
-        key: "t", title: `Medição ${row + 1} · Tempo`,
-        instructions: row === 0
-          ? "A série começa em 0 s. Essa primeira medição é necessária para estimar a velocidade inicial."
-          : `Esta medição foi registrada ${format(point.t - reference.points[row - 1].t)} s depois da anterior. O campo mostra o tempo desde o início da reação.`
-      },
-      {
-        key: "conc", title: `Medição ${row + 1} · Concentração`,
-        instructions: `Este valor mostra quantos mols de P havia por litro de solução aos ${format(point.t)} s.`
-      }
-    ].map(({ key, title, instructions }) => ({
-      panel: "analysis", target: "#seriesTable", title, instructions,
-      entry: { input: `#dataTableTbody tr[data-index="${row}"] [data-field="${key}"]`, row, key, value: format(point[key]) }
-    })));
-    return [...configuration, ...measurements, ...tourResultSteps];
+    const measurements = {
+      panel: "analysis", target: "#seriesTable",
+      title: "Tabela de medições",
+      instructions: "Cada linha registra o tempo desde o início da reação e a concentração do produto medida naquele instante. As unidades aparecem no cabeçalho.",
+      entries: reference.points.flatMap((point, row) => ["t", "conc"].map(key => ({
+        input: `#dataTableTbody tr[data-index="${row}"] [data-field="${key}"]`, row, key, value: format(point[key])
+      })))
+    };
+    return [...configuration, measurements, ...tourResultSteps];
   }
 
   const tour = byId("firstAccessTour");
@@ -620,54 +608,73 @@
     selectExperiment(reference.id);
   }
 
-  function showTourEntry(step, index) {
+  function writeTourEntry(experiment, { row, key, value }) {
+    const record = row === undefined ? experiment : experiment.points[row];
+    record[key] = value;
+  }
+
+  function showTourEntries(step, index) {
     const reference = demoSession.reference;
-    const { input: selector, row, key, value } = step.entry;
+    const rows = Math.max(2, ...step.entries.map(({ row }) => (row ?? -1) + 1));
     const draft = {
       ...reference, name: "", productName: "", nu: "",
-      points: Array.from({ length: Math.max(2, (row ?? 0) + 1) }, () => ({ t: "", conc: "" }))
+      points: Array.from({ length: rows }, () => ({ t: "", conc: "" }))
     };
-    for (const { entry } of tourSteps.slice(0, index)) {
-      const record = entry.row === undefined ? draft : draft.points[entry.row];
-      record[entry.key] = entry.value;
-    }
+    const previousEntries = tourSteps.slice(0, index).flatMap(previous => previous.entries);
+    previousEntries.forEach(entry => writeTourEntry(draft, entry));
     state.experiments[0] = draft;
     selectExperiment(draft.id, { showResults: false });
     highlightTourTarget(step.target);
-    const input = $(selector);
-    input.classList.add("tour-typing");
-    spotlightField(input);
 
     const next = byId("tourNext");
-    const finish = () => {
-      const record = row === undefined ? draft : draft.points[row];
-      record[key] = value;
-      input.value = value;
-      if (key === "name") renderExperimentSelect();
+    function focusEntry(input) {
+      tourTarget.querySelector(".tour-typing")?.classList.remove("tour-typing");
+      input.classList.add("tour-typing");
+      spotlightField(input);
+    }
+
+    function finish() {
+      if (step.entries[0].key === "name") renderExperimentSelect();
+      if (step.entries.length > 1) highlightTourTarget(step.target);
       next.removeAttribute("aria-disabled");
-    };
+    }
+
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      step.entries.forEach(entry => {
+        writeTourEntry(draft, entry);
+        $(entry.input).value = entry.value;
+      });
+      if (step.entries.length === 1) focusEntry($(step.entries[0].input));
       finish();
       return;
     }
 
-    next.setAttribute("aria-disabled", "true");
-    let length = 0;
-    const typeCharacter = () => {
+    function typeEntry(entryIndex) {
       if (!tour.open) return;
-      length += 1;
-      input.value = value.slice(0, length);
-      if (length < value.length) tourTypingTimer = setTimeout(typeCharacter, 90);
-      else finish();
-    };
-    tourTypingTimer = setTimeout(typeCharacter, 200);
-  }
+      const entry = step.entries[entryIndex];
+      const input = $(entry.input);
+      focusEntry(input);
+      let length = 0;
+      function typeCharacter() {
+        if (!tour.open) return;
+        length += 1;
+        input.value = entry.value.slice(0, length);
+        if (length < entry.value.length) {
+          tourTypingTimer = setTimeout(typeCharacter, 90);
+          return;
+        }
+        writeTourEntry(draft, entry);
+        if (entryIndex + 1 < step.entries.length) {
+          tourTypingTimer = setTimeout(() => typeEntry(entryIndex + 1), 110);
+        } else {
+          finish();
+        }
+      }
+      tourTypingTimer = setTimeout(typeCharacter, 150);
+    }
 
-  function describeDemoTangent(point, experiment) {
-    const comparison = point.t >= 25 ? "10 s" : "40 s";
-    byId("tourInstructions").textContent =
-      `Aos ${format(point.t)} s, a velocidade é ${format(point.vReaction)} ${rateUnit(experiment)}. Compare os instantes. A reta mais plana indica uma reação mais lenta.`;
-    byId("tourCompare").textContent = `Comparar com ${comparison}`;
+    next.setAttribute("aria-disabled", "true");
+    typeEntry(0);
   }
 
   function showTourStep(index) {
@@ -679,26 +686,21 @@
     byId("tourMeter").value = index + 1;
     byId("tourTitle").textContent = step.title;
     byId("tourInstructions").textContent = step.instructions || "";
-    byId("tourCompare").hidden = !step.compare;
     byId("tourPrevious").hidden = false;
     byId("tourPrevious").disabled = index === 0;
     const next = byId("tourNext");
     next.textContent = index === tourSteps.length - 1 ? "Concluir" : "Próximo";
     next.removeAttribute("aria-disabled");
 
-    if (step.entry) {
+    if (step.entries) {
       if (activePanel !== step.panel) openPanel(step.panel);
-      showTourEntry(step, index);
+      showTourEntries(step, index);
       return;
     }
 
     if (step.fit && current().example !== "fit") loadSimulatedGroup();
     if (!step.fit && current() !== demoSession.reference) showTourReference();
     if (activePanel !== step.panel) openPanel(step.panel);
-    if (step.compare) {
-      selectedTime = 10;
-      drawTangent();
-    }
     highlightTourTarget(step.target);
   }
 
@@ -732,9 +734,8 @@
       byId("tourProgress").textContent = "Primeiro acesso";
       byId("tourMeter").hidden = true;
       byId("tourTitle").textContent = "Seu primeiro ensaio no Kinetics Lab";
-      byId("tourInstructions").textContent = "Veja o laboratório preencher um ensaio simulado, um campo por vez. Leia a explicação e clique em Próximo quando quiser continuar. Seus ensaios salvos ficam disponíveis ao sair.";
+      byId("tourInstructions").textContent = "Acompanhe o preenchimento de um ensaio simulado e veja o que cada tabela representa. Clique em Próximo quando quiser continuar. Seus ensaios salvos ficam disponíveis ao sair.";
       byId("tourPrevious").hidden = true;
-      byId("tourCompare").hidden = true;
       byId("tourNext").textContent = "Iniciar tour";
       byId("tourNext").removeAttribute("aria-disabled");
       byId("firstAccessBtn").setAttribute("aria-expanded", "true");
@@ -756,10 +757,6 @@
     if (tourIndex === 0) byId("tourNext").focus({ preventScroll: true });
   });
   bind("tourClose", "click", () => tour.close());
-  bind("tourCompare", "click", () => {
-    selectedTime = selectedTime >= 25 ? 10 : 40;
-    drawTangent();
-  });
   tour.addEventListener("close", () => {
     clearTimeout(tourTypingTimer);
     clearTourHighlight();

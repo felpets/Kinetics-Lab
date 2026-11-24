@@ -93,8 +93,8 @@
           </div>
           <p id="initialRateNote"></p>
           <div class="chartgrid">
-            <div><h3>Velocidade média por intervalo</h3><div class="table-wrapper"><table class="kinetics-table"><thead><tr><th>Intervalo</th><th>Tempo médio</th><th>Δ[P]</th><th class="rate-heading">v</th></tr></thead><tbody id="averageRatesTbody"></tbody></table></div></div>
-            <div><h3>Velocidade instantânea</h3><div class="table-wrapper"><table class="kinetics-table"><thead><tr><th>Tempo</th><th>[P]</th><th class="rate-heading">v</th><th>Método</th></tr></thead><tbody id="instantaneousRatesTbody"></tbody></table></div></div>
+            <div id="averageRatesTable"><h3>Velocidade média por intervalo</h3><div class="table-wrapper"><table class="kinetics-table"><thead><tr><th>Intervalo</th><th>Tempo médio</th><th>Δ[P]</th><th class="rate-heading">v</th></tr></thead><tbody id="averageRatesTbody"></tbody></table></div></div>
+            <div id="instantaneousRatesTable"><h3>Velocidade instantânea</h3><div class="table-wrapper"><table class="kinetics-table"><thead><tr><th>Tempo</th><th>[P]</th><th class="rate-heading">v</th><th>Método</th></tr></thead><tbody id="instantaneousRatesTbody"></tbody></table></div></div>
           </div>
         <div class="chartgrid">
           <!-- Gráfico 1: Concentração × Tempo -->
@@ -192,7 +192,7 @@
           <label for="fitOrigin">Dados do ajuste <select id="fitOrigin"><option value="recorded">Ensaios cadastrados</option><option value="simulated">Exemplos simulados</option></select></label>
         </div>
         <p id="fitOriginNote"></p>
-        <div class="table-wrapper">
+        <div id="fitExperimentTable" class="table-wrapper">
           <table class="kinetics-table"><thead id="fitTableHead"></thead><tbody id="fitTableBody"></tbody></table>
         </div>
         <p id="fitStatus" role="status"></p>
@@ -253,9 +253,6 @@
       <div aria-live="polite" aria-atomic="true">
         <h2 id="tourTitle"></h2>
         <p id="tourInstructions"></p>
-      </div>
-      <div class="access-tour-tools">
-        <button id="tourCompare" type="button" class="btn btn-sm" hidden></button>
       </div>
       <div class="access-tour-actions">
         <button id="tourPrevious" type="button" class="btn">Voltar</button>
