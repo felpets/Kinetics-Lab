@@ -596,7 +596,7 @@ canvas { width: 100%; height: 270px; display: block; }
 .tour-meter::-webkit-progress-bar { background: #2a405a; }
 .tour-meter::-webkit-progress-value { background: var(--cyan); }
 .tour-meter::-moz-progress-bar { background: var(--cyan); }
-.access-tour :disabled { opacity: .5; cursor: default; }
+.access-tour :is(:disabled, [aria-disabled="true"]) { opacity: .5; cursor: default; }
 .tour-target { scroll-margin-top: 100px; }
 .tour-typing {
   outline: 2px solid var(--cyan);

@@ -6,7 +6,7 @@
 
 O Kinetics Lab determina a velocidade de uma reação a partir de medições da concentração de um produto ao longo do tempo. Ele usa as velocidades iniciais de vários ensaios para estimar as ordens parciais, a ordem global e a constante cinética.
 
-Use o botão **Primeiro acesso**, na barra superior, para abrir o tour. A cada etapa, o laboratório destaca o campo, gráfico ou resultado comentado e mostra como preenche um ensaio simulado. Avance no seu ritmo ou escolha **Reproduzir tudo**. Os dados da demonstração são temporários.
+Use o botão **Primeiro acesso**, na barra superior, para abrir o tour. O laboratório preenche um campo de cada vez e aguarda que você clique em **Próximo**. Depois, acompanhe os gráficos e resultados no mesmo ritmo. Os dados da demonstração são temporários.
 
 ## Determinação Experimental da Velocidade
 
