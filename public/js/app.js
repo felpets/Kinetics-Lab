@@ -467,32 +467,32 @@
   const tourSteps = [
     {
       panel: "analysis", target: "#seriesTable",
-      title: "O ensaio já está preenchido",
-      instructions: "O laboratório inseriu seis medições simuladas. Aos 10 segundos, por exemplo, a concentração do produto chegou a 0,12 mol/L.",
+      title: "Vamos montar um ensaio",
+      instructions: "Começamos pelo nome do ensaio e pelo produto observado. Neste exemplo, o produto P tem coeficiente igual a 1.",
       next: "Ver o gráfico"
     },
     {
       panel: "analysis", target: "#productVsTimeCanvas",
       title: "O produto se acumula",
       instructions: "Cada ponto vem da tabela. A curva sobe mais depressa no início e vai ficando mais plana. O produto continua a se formar, mas em ritmo menor.",
-      next: "Ver as velocidades"
+      next: "Ver as velocidades", duration: 8500
     },
     {
       panel: "analysis", target: "#experimentalResults .metrics",
       title: "A reação começa mais rápida",
       instructions: "Nos primeiros 10 s, a concentração sobe 0,12 mol/L. Dividindo por 10 s, o laboratório estima a velocidade inicial em 0,012 mol/(L·s). A média dos 50 s cai para 0,008 mol/(L·s).",
-      next: "Testar a tangente"
+      next: "Testar a tangente", duration: 11000
     },
     {
       panel: "analysis", target: "#tangentCanvas", compare: true,
       title: "Veja a velocidade em um instante",
-      next: "Ajustar a lei de velocidade"
+      next: "Ajustar a lei de velocidade", duration: 12000
     },
     {
       panel: "modeling", target: "#fitSummary", fit: true,
       title: "Qual reagente muda mais a velocidade?",
       instructions: "O laboratório comparou cinco ensaios. Neste exemplo, dobrar A dobra a velocidade inicial. Dobrar B quadruplica a velocidade inicial. Em cada comparação, a concentração do outro reagente fica fixa.",
-      next: "Ver opções de exportação"
+      next: "Ver opções de exportação", duration: 12000
     },
     {
       panel: "reports", target: "#reports .actions", fit: true,
@@ -509,6 +509,114 @@
   ].join(","));
   let tourIndex = 0;
   let tourTarget;
+  let tourPlaying = false;
+  let tourQueue = [];
+  let tourTimer;
+  let tourActionStarted;
+
+  function stopTourTimer() {
+    if (tourTimer === undefined) return;
+    clearTimeout(tourTimer);
+    tourTimer = undefined;
+    const action = tourQueue[0];
+    action.delay = Math.max(0, action.delay - (performance.now() - tourActionStarted));
+  }
+
+  function runTourQueue() {
+    if (!tour.open || !tourPlaying || tourTimer !== undefined || !tourQueue.length) return;
+    const action = tourQueue[0];
+    tourActionStarted = performance.now();
+    tourTimer = setTimeout(() => {
+      tourTimer = undefined;
+      tourQueue.shift();
+      if (!tour.open) return;
+      action.run();
+      runTourQueue();
+    }, action.delay);
+  }
+
+  function setTourPlaying(playing) {
+    tourPlaying = playing;
+    byId("tourPlayback").textContent = tourIndex === tourSteps.length - 1
+      ? "Rever" : (playing ? "Pausar" : "Reproduzir");
+    if (playing) runTourQueue();
+    else stopTourTimer();
+  }
+
+  function clearTourHighlight() {
+    if (!tourTarget) return;
+    tourTarget.querySelector(".tour-typing")?.classList.remove("tour-typing");
+    tourTarget.classList.remove("tour-target");
+    tourTarget = null;
+  }
+
+  function highlightTourTarget(selector) {
+    clearTourHighlight();
+    tourTarget = $(selector);
+    tourTarget.classList.add("tour-target");
+    tourTarget.scrollIntoView({ block: "start", behavior: "instant" });
+  }
+
+  function showTourReference() {
+    const reference = demoSession.reference;
+    state.experiments[0] = reference;
+    selectExperiment(reference.id);
+  }
+
+  function queueDemoTyping(tableSelector) {
+    const reference = demoSession.reference;
+    const draft = {
+      ...reference, name: "", productName: "", nu: "",
+      points: [{ t: "", conc: "" }, { t: "", conc: "" }]
+    };
+    state.experiments[0] = draft;
+    selectExperiment(draft.id);
+    byId("validationAlertBox").textContent = "";
+    highlightTourTarget("#experimentSettings");
+    const queue = (delay, run) => tourQueue.push({ delay, run });
+
+    function typeValue(getInput, record, field, value) {
+      queue(180, () => {
+        const input = getInput();
+        input.classList.add("tour-typing");
+        const bottom = input.getBoundingClientRect().bottom;
+        const limit = tour.getBoundingClientRect().top - 18;
+        if (bottom > limit) window.scrollBy({ top: bottom - limit, behavior: "instant" });
+      });
+      [...value].forEach((char, i) => {
+        queue(65, () => {
+          record[field] += char;
+          getInput().value = record[field];
+          if (i === value.length - 1) getInput().classList.remove("tour-typing");
+        });
+      });
+    }
+
+    typeValue(() => byId("expNameInp"), draft, "name", reference.name);
+    typeValue(() => byId("productNameInp"), draft, "productName", reference.productName);
+    typeValue(() => byId("nuInp"), draft, "nu", reference.nu);
+    queue(500, () => {
+      byId("tourTitle").textContent = "Digite o tempo e a concentração";
+      byId("tourInstructions").textContent = "Cada linha representa uma medição. Primeiro entra o tempo em segundos, depois a concentração de P em mol/L.";
+      highlightTourTarget(tableSelector);
+    });
+    reference.points.forEach((point, index) => {
+      const row = draft.points[index] || { t: "", conc: "" };
+      if (index >= 2) queue(120, () => {
+        draft.points.push(row);
+        renderInputTable();
+      });
+      const input = field => () => $(`#dataTableTbody tr[data-index="${index}"] [data-field="${field}"]`);
+      typeValue(input("t"), row, "t", format(point.t));
+      typeValue(input("conc"), row, "conc", format(point.conc));
+    });
+    queue(350, () => {
+      showTourReference();
+      byId("tourTitle").textContent = "A tabela está pronta";
+      byId("tourInstructions").textContent = "Com as seis medições, o laboratório já pode traçar o gráfico e calcular as velocidades.";
+    });
+    queue(4200, () => showTourStep(1));
+  }
 
   function describeDemoTangent(point, experiment) {
     const comparison = point.t >= 25 ? "10 s" : "40 s";
@@ -518,6 +626,9 @@
   }
 
   function showTourStep(index) {
+    stopTourTimer();
+    tourQueue = [];
+    clearTourHighlight();
     tourIndex = index;
     const step = tourSteps[index];
     byId("tourProgress").textContent = `Passo ${index + 1} de ${tourSteps.length}`;
@@ -527,38 +638,41 @@
     byId("tourPrevious").disabled = index === 0;
     byId("tourNext").textContent = step.next;
 
-    if (step.fit && current().example !== "fit") {
-      loadSimulatedGroup();
-    } else if (!step.fit && current().example !== "reference") {
-      loadReference();
+    if (index > 0) {
+      if (step.fit && current().example !== "fit") loadSimulatedGroup();
+      if (!step.fit && current() !== demoSession.reference) showTourReference();
     }
     if (activePanel !== step.panel) openPanel(step.panel);
-    if (step.compare) {
-      selectedTime = 10;
-      drawTangent();
+    if (index === 0) {
+      queueDemoTyping(step.target);
+    } else {
+      if (step.compare) {
+        selectedTime = 10;
+        drawTangent();
+        tourQueue.push({ delay: 5500, run: () => { selectedTime = 40; drawTangent(); } });
+      }
+      highlightTourTarget(step.target);
+      if (step.duration) tourQueue.push({ delay: step.duration - (step.compare ? 5500 : 0), run: () => showTourStep(index + 1) });
     }
-    tourTarget?.classList.remove("tour-target");
-    tourTarget = $(step.target);
-    tourTarget.classList.add("tour-target");
-    tourTarget.scrollIntoView({ block: "start", behavior: "instant" });
+    setTourPlaying(tourPlaying && index < tourSteps.length - 1);
   }
 
   bind("firstAccessBtn", "click", () => {
     if (!demoSession) {
-      demoSession = { state, activePanel, selectedTime, scrollY: window.scrollY, importStatus: byId("importStatus").textContent };
       const first = createReference();
+      demoSession = { state, activePanel, selectedTime, scrollY: window.scrollY, importStatus: byId("importStatus").textContent, reference: first };
       state = {
         experiments: [first], selected: first.id, fitOrigin: "simulated",
         reagents: [{ id: newId(), name: "A" }, { id: newId(), name: "B" }]
       };
       demoControls.forEach(control => { control.inert = true; });
       renderReagents();
-      selectExperiment(first.id);
       tour.show();
       byId("firstAccessBtn").setAttribute("aria-expanded", "true");
+      tourPlaying = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       showTourStep(0);
     }
-    byId("tourNext").focus({ preventScroll: true });
+    byId("tourPlayback").focus({ preventScroll: true });
   });
   bind("tourNext", "click", () => {
     if (tourIndex === tourSteps.length - 1) tour.close();
@@ -566,16 +680,31 @@
   });
   bind("tourPrevious", "click", () => {
     showTourStep(tourIndex - 1);
-    if (tourIndex === 0) byId("tourNext").focus({ preventScroll: true });
+    if (tourIndex === 0) byId("tourPlayback").focus({ preventScroll: true });
+  });
+  bind("tourPlayback", "click", () => {
+    if (tourIndex === tourSteps.length - 1) {
+      tourPlaying = true;
+      showTourStep(0);
+    } else {
+      setTourPlaying(!tourPlaying);
+    }
   });
   bind("tourClose", "click", () => tour.close());
   bind("tourCompare", "click", () => {
+    setTourPlaying(false);
     selectedTime = selectedTime >= 25 ? 10 : 40;
     drawTangent();
   });
+  for (const event of ["pointerdown", "input", "change"]) {
+    $(".tangent-widget").addEventListener(event, () => {
+      if (tour.open && tourSteps[tourIndex].compare) setTourPlaying(false);
+    });
+  }
   tour.addEventListener("close", () => {
-    tourTarget?.classList.remove("tour-target");
-    tourTarget = null;
+    setTourPlaying(false);
+    tourQueue = [];
+    clearTourHighlight();
     const previous = demoSession;
     demoSession = undefined;
     state = previous.state;
