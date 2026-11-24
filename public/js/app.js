@@ -475,9 +475,39 @@
       instructions: "Cada linha corresponde ao instante de uma medição. A tabela reúne a concentração do produto, a velocidade estimada naquele instante e o método de cálculo."
     },
     {
+      panel: "analysis", target: "#productVsTimeCanvas",
+      title: "Concentração do produto × tempo",
+      instructions: "Leia o tempo no eixo horizontal e a concentração do produto no vertical. Cada ponto corresponde a uma medição da tabela. A curva representa a concentração estimada entre os pontos."
+    },
+    {
+      panel: "analysis", target: "#averageRateVsTimeCanvas",
+      title: "Velocidade média × tempo",
+      instructions: "Cada ponto representa a velocidade média da reação entre duas medições. No eixo horizontal, ele aparece no tempo médio daquele intervalo."
+    },
+    {
+      panel: "analysis", target: "#instantaneousVsTimeCanvas",
+      title: "Velocidade instantânea × tempo",
+      instructions: "O eixo horizontal mostra o tempo. O vertical mostra a velocidade instantânea estimada a partir das medições de concentração. Cada ponto marca a estimativa em um instante medido."
+    },
+    {
+      panel: "analysis", target: "#rateVsProductCanvas",
+      title: "Velocidade × concentração do produto",
+      instructions: "O eixo horizontal mostra a concentração medida do produto. O vertical mostra a velocidade instantânea estimada para aquele mesmo ponto."
+    },
+    {
+      panel: "analysis", target: "#tangentCanvas", tangent: true,
+      title: "Tangente à curva de concentração",
+      instructions: "A inclinação da reta indica a taxa de formação do produto no instante escolhido. Dividindo essa taxa pelo coeficiente do produto, obtemos a velocidade da reação."
+    },
+    {
       panel: "modeling", target: "#fitExperimentTable", fit: true,
       title: "Ensaios usados na lei de velocidade",
       instructions: "Cada linha resume um ensaio. A tabela reúne as concentrações iniciais dos reagentes, a velocidade inicial estimada pelas medições e a prevista pelo ajuste. A coluna Situação indica quais ensaios entraram no cálculo."
+    },
+    {
+      panel: "modeling", target: "#comparisonChartCanvas", fit: true,
+      title: "Comparação dos ensaios",
+      instructions: "Cada série mostra a concentração do produto ao longo do tempo em um ensaio usado no ajuste. A legenda identifica os ensaios para que você possa comparar as medições."
     },
     {
       panel: "reports", target: "#reports .actions", fit: true,
@@ -686,6 +716,7 @@
     byId("tourMeter").value = index + 1;
     byId("tourTitle").textContent = step.title;
     byId("tourInstructions").textContent = step.instructions || "";
+    byId("tourTangentTime").hidden = !step.tangent;
     byId("tourPrevious").hidden = false;
     byId("tourPrevious").disabled = index === 0;
     const next = byId("tourNext");
@@ -734,8 +765,9 @@
       byId("tourProgress").textContent = "Primeiro acesso";
       byId("tourMeter").hidden = true;
       byId("tourTitle").textContent = "Seu primeiro ensaio no Kinetics Lab";
-      byId("tourInstructions").textContent = "Acompanhe o preenchimento de um ensaio simulado e veja o que cada tabela representa. Clique em Próximo quando quiser continuar. Seus ensaios salvos ficam disponíveis ao sair.";
+      byId("tourInstructions").textContent = "Acompanhe o preenchimento de um ensaio simulado e aprenda a ler as tabelas e os gráficos. Clique em Próximo quando quiser continuar. Seus ensaios salvos ficam disponíveis ao sair.";
       byId("tourPrevious").hidden = true;
+      byId("tourTangentTime").hidden = true;
       byId("tourNext").textContent = "Iniciar tour";
       byId("tourNext").removeAttribute("aria-disabled");
       byId("firstAccessBtn").setAttribute("aria-expanded", "true");
@@ -757,6 +789,12 @@
     if (tourIndex === 0) byId("tourNext").focus({ preventScroll: true });
   });
   bind("tourClose", "click", () => tour.close());
+  bind("tourTangentTime", "click", () => {
+    const { rawPoints } = analysisFor(current());
+    const point = rawPoints.find(point => point.t > selectedTime) ?? rawPoints[0];
+    selectedTime = point.t;
+    drawTangent();
+  });
   tour.addEventListener("close", () => {
     clearTimeout(tourTypingTimer);
     clearTourHighlight();

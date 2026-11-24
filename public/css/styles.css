@@ -614,6 +614,9 @@ body:has(.access-tour[open]) main { padding-bottom: min(460px, 68dvh); }
   #fitExperimentTable.tour-target, .tour-target:is(#averageRatesTable, #instantaneousRatesTable) .table-wrapper {
     max-height: clamp(140px, calc(100dvh - 475px), 300px);
   }
+  body:has(.access-tour[open]) :is(#analysis, #comparisonPanel) canvas {
+    height: clamp(140px, calc(100dvh - 440px), 235px);
+  }
 }
 @media print {
   .access-tour, .tour-spotlight { display: none !important; }
