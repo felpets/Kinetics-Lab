@@ -210,17 +210,17 @@
     <section id="theory" class="panel" hidden>
       <div class="panelhead"><h2>Fundamentação Teórica</h2></div>
       <div class="panelbody">
-        <div class="theory-block"><h3>Velocidade de reação</h3>
+        <div id="theoryRate" class="theory-block"><h3>Velocidade de reação</h3>
           <p>Para um produto P com coeficiente estequiométrico ν, a velocidade média é a taxa de formação dividida por ν. A média global usa os extremos da série. No gráfico por intervalo, cada média é posicionada no ponto médio temporal.</p>
           <div class="theory-formula-box">v̄ = (1/ν) × Δ[P]/Δt</div>
         </div>
-        <div class="theory-block"><h3>Diferenças finitas e reta tangente</h3>
+        <div id="theoryTangent" class="theory-block"><h3>Diferenças finitas e reta tangente</h3>
           <p>A velocidade instantânea é v(t) = (1/ν) × d[P]/dt. Em uma malha uniforme, a diferença central usa os dois vizinhos e divide a variação de concentração pela diferença entre seus tempos.</p>
           <p>Para três amostras a, b e c, com tempos distintos, sejam s₁ e s₂ as inclinações secantes de a até b e de b até c. A derivada do interpolador quadrático é dada pela expressão abaixo. O mesmo cálculo usa três pontos avançados ou recuados nas extremidades. Com dois pontos, usa-se a secante.</p>
           <div class="theory-formula-box">d[P]/dt ≈ s₁ + ((t − tₐ) + (t − tᵦ)) × (s₂ − s₁)/(t꜀ − tₐ)</div>
           <p>A curva interativa usa interpolação cúbica de Hermite com as derivadas de diferenças finitas nos pontos medidos. Entre amostras, a inclinação é a da curva interpolada. O resultado pode ser sensível ao ruído e à frequência de amostragem.</p>
         </div>
-        <div class="theory-block"><h3>Método das velocidades iniciais</h3>
+        <div id="theoryInitialRates" class="theory-block"><h3>Método das velocidades iniciais</h3>
           <p>Para estimar v₀, usa-se a média do primeiro intervalo a partir de t = 0. Escolha um primeiro intervalo suficientemente curto para que essa secante aproxime a velocidade no início da reação.</p>
           <div class="theory-formula-box">ln(v₀) = ln(k) + n₁ ln([R₁]₀) + … + nₚ ln([Rₚ]₀)</div>
           <p>A regressão estima o intercepto e as ordens parciais por QR de Householder com pivotamento. O ajuste exige pelo menos p + 1 ensaios válidos para p reagentes. Ensaios adicionais permitem avaliar resíduos. Séries com v₀ ou concentrações iniciais não positivas ficam fora do ajuste logarítmico. Concentrações colineares ou com variação insuficiente impedem a estimativa confiável dos parâmetros.</p>
@@ -253,6 +253,7 @@
       <div aria-live="polite" aria-atomic="true">
         <h2 id="tourTitle"></h2>
         <p id="tourInstructions"></p>
+        <p id="tourNavigationNote" class="tour-navigation-note" hidden></p>
       </div>
       <div class="access-tour-actions">
         <button id="tourTangentTime" type="button" class="btn" hidden>Ver outro instante</button>

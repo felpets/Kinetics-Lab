@@ -500,9 +500,19 @@
       instructions: "A inclinação da reta indica a taxa de formação do produto no instante escolhido. Dividindo essa taxa pelo coeficiente do produto, obtemos a velocidade da reação."
     },
     {
+      panel: "modeling", target: "#reagentList", fit: true,
+      title: "Reagentes do modelo",
+      instructions: "Cadastre aqui os reagentes que entram no ajuste. As concentrações iniciais de cada um são preenchidas separadamente em cada ensaio, na tela de determinação experimental."
+    },
+    {
       panel: "modeling", target: "#fitExperimentTable", fit: true,
       title: "Ensaios usados na lei de velocidade",
       instructions: "Cada linha resume um ensaio. A tabela reúne as concentrações iniciais dos reagentes, a velocidade inicial estimada pelas medições e a prevista pelo ajuste. A coluna Situação indica quais ensaios entraram no cálculo."
+    },
+    {
+      panel: "modeling", target: "#fitSummary", fit: true,
+      title: "Resultados do ajuste",
+      instructions: "O resumo mostra a ordem de cada reagente, a ordem global e a constante cinética com sua unidade. Os indicadores R² e RMSE ajudam a avaliar a qualidade do ajuste."
     },
     {
       panel: "modeling", target: "#comparisonChartCanvas", fit: true,
@@ -510,11 +520,33 @@
       instructions: "Cada série mostra a concentração do produto ao longo do tempo em um ensaio usado no ajuste. A legenda identifica os ensaios para que você possa comparar as medições."
     },
     {
-      panel: "reports", target: "#reports .actions", fit: true,
-      title: "Leve os resultados com você",
-      instructions: "Baixe a série simulada ou as velocidades calculadas em CSV. Você também pode imprimir o relatório ou salvá-lo como PDF."
+      panel: "theory", target: "#theoryRate",
+      title: "Fórmula da velocidade média",
+      instructions: "A fórmula divide a variação da concentração pelo tempo transcorrido e pelo coeficiente do produto. É o cálculo usado na tabela de velocidade média."
+    },
+    {
+      panel: "theory", target: "#theoryTangent",
+      title: "Diferenças finitas e tangente",
+      instructions: "Este trecho explica como o laboratório usa pontos próximos para estimar a velocidade instantânea e como a curva interpolada permite traçar uma tangente entre as medições."
+    },
+    {
+      panel: "theory", target: "#theoryInitialRates",
+      title: "Método das velocidades iniciais",
+      instructions: "Esta seção descreve como o ajuste usa as velocidades iniciais e as concentrações dos reagentes para calcular as ordens e a constante cinética. Também explica quais ensaios podem entrar no cálculo."
+    },
+    {
+      panel: "reports", target: "#reports .panelbody", fit: true,
+      title: "Relatório e exportação",
+      instructions: "O CSV de dados contém as medições do ensaio selecionado. O CSV de velocidades reúne os valores calculados. A opção de imprimir ou salvar em PDF abre o relatório do ensaio e do ajuste ativo."
     }
   ];
+
+  const tourPanelIntroductions = {
+    analysis: "É aqui que você registra as medições de um ensaio e consulta as velocidades calculadas.",
+    modeling: "Nesta tela, o laboratório usa as velocidades iniciais de vários ensaios para ajustar a lei de velocidade.",
+    theory: "Esta tela reúne as fórmulas e os métodos usados pelo laboratório.",
+    reports: "Nesta tela, você pode baixar os dados e gerar um relatório do ensaio."
+  };
 
   function createTourSteps(reference) {
     const configuration = [
@@ -538,13 +570,16 @@
 
   const tour = byId("firstAccessTour");
   const spotlight = byId("tourSpotlight");
+  const navigation = $(".sidebar nav");
+  const navigationButtons = [...navigation.querySelectorAll("[data-target]")];
   const demoControls = document.querySelectorAll([
-    ".sidebar nav", ".experiment-toolbar", "#experimentSettings", "#initialConcentrations",
+    ".experiment-toolbar", "#experimentSettings", "#initialConcentrations",
     "[data-open]", "#seriesActions", "#pasteBoxWrap", "#dataTableTbody",
     "#reagentList", "#modeling .actions", "#fitTableBody"
   ].join(","));
   let tourSteps = [];
   let tourIndex = -1;
+  let pendingTourStep;
   let tourTarget;
   let tourFocus;
   let tourTypingTimer;
@@ -570,10 +605,13 @@
     if (!target?.isConnected) return centerTour();
     const boundary = tourViewport();
     const rect = target.getBoundingClientRect();
-    const left = Math.max(boundary.left, rect.left - 5);
-    const right = Math.min(boundary.right, rect.right + 5);
-    const top = Math.max(boundary.top, rect.top - 5);
-    const bottom = Math.min(boundary.bottom, rect.bottom + 5);
+    const focusBoundary = pendingTourStep === undefined ? boundary : {
+      left: 0, right: document.documentElement.clientWidth, top: 0, bottom: window.innerHeight
+    };
+    const left = Math.max(focusBoundary.left, rect.left - 5);
+    const right = Math.min(focusBoundary.right, rect.right + 5);
+    const top = Math.max(focusBoundary.top, rect.top - 5);
+    const bottom = Math.min(focusBoundary.bottom, rect.bottom + 5);
     if (right <= left || bottom <= top) return centerTour();
 
     spotlight.classList.remove("is-scrim");
@@ -614,11 +652,11 @@
     tourTarget = null;
   }
 
-  function highlightTourTarget(selector) {
+  function highlightTourTarget(target) {
     clearTourHighlight();
-    tourTarget = $(selector);
+    tourTarget = typeof target === "string" ? $(target) : target;
     tourTarget.classList.add("tour-target");
-    tourTarget.scrollIntoView({ block: "start", behavior: "instant" });
+    if (pendingTourStep === undefined) tourTarget.scrollIntoView({ block: "start", behavior: "instant" });
     positionTour();
   }
 
@@ -720,6 +758,7 @@
     byId("tourPrevious").hidden = false;
     byId("tourPrevious").disabled = index === 0;
     const next = byId("tourNext");
+    next.hidden = false;
     next.textContent = index === tourSteps.length - 1 ? "Concluir" : "Próximo";
     next.removeAttribute("aria-disabled");
 
@@ -730,9 +769,49 @@
     }
 
     if (step.fit && current().example !== "fit") loadSimulatedGroup();
-    if (!step.fit && current() !== demoSession.reference) showTourReference();
+    if (step.panel === "analysis" && current() !== demoSession.reference) showTourReference();
     if (activePanel !== step.panel) openPanel(step.panel);
     highlightTourTarget(step.target);
+  }
+
+  function clearTourNavigation() {
+    pendingTourStep = undefined;
+    navigation.inert = true;
+    for (const button of navigationButtons) {
+      button.inert = false;
+      button.removeAttribute("aria-describedby");
+    }
+    const note = byId("tourNavigationNote");
+    note.hidden = true;
+    note.textContent = "";
+  }
+
+  function requestTourStep(index) {
+    const { panel } = tourSteps[index];
+    if (panel === activePanel) {
+      showTourStep(index);
+      return;
+    }
+
+    pendingTourStep = index;
+    const button = navigationButtons.find(item => item.dataset.target === panel);
+    const label = button.textContent.trim();
+    byId("tourProgress").textContent = "Troca de tela";
+    byId("tourTitle").textContent = label;
+    byId("tourInstructions").textContent = tourPanelIntroductions[panel];
+    const note = byId("tourNavigationNote");
+    note.textContent = `Para continuar, clique em ${label} no menu.`;
+    note.hidden = false;
+    byId("tourTangentTime").hidden = true;
+    byId("tourNext").hidden = true;
+    byId("tourPrevious").hidden = tourIndex < 0;
+    byId("tourPrevious").disabled = tourIndex < 0;
+
+    for (const item of navigationButtons) item.inert = item !== button;
+    navigation.inert = false;
+    button.setAttribute("aria-describedby", note.id);
+    highlightTourTarget(button);
+    button.focus({ preventScroll: true });
   }
 
   function beginTour() {
@@ -747,9 +826,10 @@
     renderReagents();
     tourSteps = createTourSteps(first);
     byId("tourMeter").max = tourSteps.length;
+    byId("tourMeter").value = 0;
     byId("tourMeter").hidden = false;
-    showTourStep(0);
-    byId("tourNext").focus({ preventScroll: true });
+    requestTourStep(0);
+    if (pendingTourStep === undefined) byId("tourNext").focus({ preventScroll: true });
   }
 
   bind("firstAccessBtn", "click", () => {
@@ -761,13 +841,14 @@
       tourIndex = -1;
       $("main").inert = true;
       $(".topbar").inert = true;
-      $(".sidebar nav").inert = true;
+      clearTourNavigation();
       byId("tourProgress").textContent = "Primeiro acesso";
       byId("tourMeter").hidden = true;
       byId("tourTitle").textContent = "Seu primeiro ensaio no Kinetics Lab";
-      byId("tourInstructions").textContent = "Acompanhe o preenchimento de um ensaio simulado e aprenda a ler as tabelas e os gráficos. Clique em Próximo quando quiser continuar. Seus ensaios salvos ficam disponíveis ao sair.";
+      byId("tourInstructions").textContent = "Veja como registrar um ensaio, interpretar as tabelas e os gráficos e usar as demais telas do laboratório. Ao chegar a uma troca de tela, o guia indicará qual botão clicar no menu.";
       byId("tourPrevious").hidden = true;
       byId("tourTangentTime").hidden = true;
+      byId("tourNext").hidden = false;
       byId("tourNext").textContent = "Iniciar tour";
       byId("tourNext").removeAttribute("aria-disabled");
       byId("firstAccessBtn").setAttribute("aria-expanded", "true");
@@ -779,14 +860,20 @@
     byId("tourNext").focus({ preventScroll: true });
   });
   bind("tourNext", "click", event => {
-    if (event.currentTarget.getAttribute("aria-disabled") === "true") return;
+    if (pendingTourStep !== undefined || event.currentTarget.getAttribute("aria-disabled") === "true") return;
     if (tourIndex < 0) beginTour();
     else if (tourIndex === tourSteps.length - 1) tour.close();
-    else showTourStep(tourIndex + 1);
+    else requestTourStep(tourIndex + 1);
   });
   bind("tourPrevious", "click", () => {
-    showTourStep(tourIndex - 1);
-    if (tourIndex === 0) byId("tourNext").focus({ preventScroll: true });
+    if (pendingTourStep !== undefined) {
+      clearTourNavigation();
+      showTourStep(tourIndex);
+      byId("tourNext").focus({ preventScroll: true });
+      return;
+    }
+    requestTourStep(tourIndex - 1);
+    if (tourIndex === 0 && pendingTourStep === undefined) byId("tourNext").focus({ preventScroll: true });
   });
   bind("tourClose", "click", () => tour.close());
   bind("tourTangentTime", "click", () => {
@@ -797,6 +884,7 @@
   });
   tour.addEventListener("close", () => {
     clearTimeout(tourTypingTimer);
+    clearTourNavigation();
     clearTourHighlight();
     spotlight.hidden = true;
     const previous = demoSession;
@@ -805,6 +893,7 @@
     selectedTime = previous.selectedTime;
     $("main").inert = false;
     $(".topbar").inert = false;
+    navigation.inert = false;
     demoControls.forEach(control => { control.inert = false; });
     byId("importStatus").textContent = previous.importStatus;
     renderReagents();
@@ -825,9 +914,17 @@
   window.addEventListener("resize", positionTour);
 
 
-  $(".sidebar nav").addEventListener("click", event => {
+  navigation.addEventListener("click", event => {
     const button = event.target.closest("[data-target]");
-    if (button) openPanel(button.dataset.target);
+    if (!button) return;
+    if (!tour.open) {
+      openPanel(button.dataset.target);
+    } else if (pendingTourStep !== undefined && tourSteps[pendingTourStep].panel === button.dataset.target) {
+      const index = pendingTourStep;
+      clearTourNavigation();
+      showTourStep(index);
+      byId("tourNext").focus({ preventScroll: true });
+    }
   });
   $("[data-open]").addEventListener("click", event => openPanel(event.currentTarget.dataset.open));
   bind("experimentSelect", "change", event => selectExperiment(event.target.value));
