@@ -1,117 +1,737 @@
+/**
+ * Kinetics Lab - Motor Gráfico Científico em Canvas Nativo
+ * Renderiza gráficos interativos de alta precisão com suporte a Retina/DPI,
+ * tooltips, download de PNG e tangente interativa com derivada geométrica.
+ * 
+ * DIRETRIZ: Sem uso de equações ou referências a Arrhenius.
+ */
+
 window.KineticsCharts = (() => {
   const palette = {
-    grid: "#1c2c44",
-    axis: "#334969",
-    text: "#869ab3",
+    grid: "#1a2a40",
+    axis: "#2f4666",
+    text: "#8fa4be",
+    textBright: "#e3effc",
     cyan: "#21d4e8",
     orange: "#ff8958",
     violet: "#9a7cff",
     green: "#43d6a0",
-    danger: "#ff667f"
+    pink: "#ff6699",
+    yellow: "#ffd166",
+    tangent: "#ff7043",
+    bgCard: "#0c1729"
   };
 
-  function setup(canvas) {
+  const chartInstances = {};
+
+  function setup(canvas, customPadding = {}) {
     const dpr = window.devicePixelRatio || 1;
     const r = canvas.getBoundingClientRect();
-    const w = r.width || 400;
-    const h = r.height || 260;
+    const w = r.width || 450;
+    const h = r.height || 280;
     canvas.width = w * dpr;
     canvas.height = h * dpr;
     const ctx = canvas.getContext("2d");
     ctx.scale(dpr, dpr);
-    return {
-      ctx,
-      w,
-      h,
-      // Margem esquerda ampliada para 78px para garantir que valores e título nunca colidam
-      p: { l: 78, r: 24, t: 30, b: 48 }
+
+    const padding = {
+      l: 76,
+      r: 24,
+      t: 28,
+      b: 46,
+      ...customPadding
     };
+
+    return { ctx, w, h, p: padding, pw: w - padding.l - padding.r, ph: h - padding.t - padding.b };
   }
 
-  function formatNum(v) {
+  function formatTick(v) {
     if (!Number.isFinite(v)) return "—";
     const abs = Math.abs(v);
     if (abs === 0) return "0";
     if (abs < 0.005 || abs >= 1000) {
       const exp = Math.floor(Math.log10(abs));
-      const mantissa = (v / Math.pow(10, exp)).toFixed(1);
-      return `${mantissa}e${exp}`;
+      const mant = (v / Math.pow(10, exp)).toFixed(1);
+      return `${mant}e${exp}`;
     }
     return abs < 0.1 ? v.toFixed(3) : abs < 1 ? v.toFixed(2) : v.toFixed(1);
   }
 
-  // GRÁFICO 1: PARIDADE (Observado vs Previsto)
-  function drawParity(canvas, results) {
-    if (!results || !results.experiments || results.experiments.length === 0) return;
-    const { ctx, w, h, p } = setup(canvas);
-    const pw = w - p.l - p.r;
-    const ph = h - p.t - p.b;
-
-    const allV = results.experiments.flatMap(e => [e.v_obs, e.v_pred]);
-    let maxV = Math.max(...allV) * 1.15;
-    if (maxV <= 0) maxV = 1;
-
+  // Desenha eixos cartesianos, grid quadriculada e títulos
+  function drawAxes(ctx, { w, h, p, pw, ph }, { xMin, xMax, yMin, yMax, xTitle, yTitle, xTicks = 5, yTicks = 4 }) {
     ctx.clearRect(0, 0, w, h);
 
-    // Grid e Eixos
     ctx.font = "10px Inter, sans-serif";
     ctx.strokeStyle = palette.grid;
     ctx.lineWidth = 1;
 
-    for (let i = 0; i <= 4; i++) {
-      const y = p.t + ph * (1 - i / 4);
+    // Linhas horizontais (Eixo Y)
+    for (let i = 0; i <= yTicks; i++) {
+      const y = p.t + ph * (1 - i / yTicks);
       ctx.beginPath();
       ctx.moveTo(p.l, y);
       ctx.lineTo(w - p.r, y);
       ctx.stroke();
 
-      // Valores no eixo Y: alinhados à direita, colados na linha do eixo sem colidir com o título
+      const val = yMin + ((yMax - yMin) * i) / yTicks;
       ctx.textAlign = "right";
       ctx.textBaseline = "middle";
       ctx.fillStyle = palette.text;
-      ctx.fillText(formatNum((maxV * i) / 4), p.l - 8, y);
+      ctx.fillText(formatTick(val), p.l - 8, y);
+    }
 
-      const x = p.l + (pw * i) / 4;
+    // Linhas verticais (Eixo X)
+    for (let i = 0; i <= xTicks; i++) {
+      const x = p.l + (pw * i) / xTicks;
       ctx.beginPath();
       ctx.moveTo(x, p.t);
       ctx.lineTo(x, h - p.b);
       ctx.stroke();
 
-      // Valores no eixo X
+      const val = xMin + ((xMax - xMin) * i) / xTicks;
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
-      ctx.fillText(formatNum((maxV * i) / 4), x, h - p.b + 8);
+      ctx.fillStyle = palette.text;
+      ctx.fillText(formatTick(val), x, h - p.b + 8);
     }
 
-    // Título do Eixo X (Centralizado horizontalmente na área de plotagem)
-    ctx.textAlign = "center";
-    ctx.textBaseline = "bottom";
-    ctx.fillStyle = "#b0c4de";
-    ctx.font = "11px Inter, sans-serif";
-    ctx.fillText("Velocidade Prevista v̂ (mol·L⁻¹·s⁻¹)", p.l + pw / 2, h - 8);
+    // Eixos principais
+    ctx.strokeStyle = palette.axis;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(p.l, p.t);
+    ctx.lineTo(p.l, h - p.b);
+    ctx.lineTo(w - p.r, h - p.b);
+    ctx.stroke();
 
-    // Título do Eixo Y (Rotacionado e isolado à esquerda, sem colisão)
-    ctx.save();
-    ctx.translate(18, p.t + ph / 2);
-    ctx.rotate(-Math.PI / 2);
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("Velocidade Observada v (mol·L⁻¹·s⁻¹)", 0, 0);
-    ctx.restore();
+    // Título do Eixo X
+    if (xTitle) {
+      ctx.textAlign = "center";
+      ctx.textBaseline = "bottom";
+      ctx.fillStyle = "#b0c4de";
+      ctx.font = "11px Inter, sans-serif";
+      ctx.fillText(xTitle, p.l + pw / 2, h - 6);
+    }
 
-    // Reta Ideal de Paridade 1:1 (y = x)
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
+    // Título do Eixo Y (Rotacionado e centralizado à esquerda)
+    if (yTitle) {
+      ctx.save();
+      ctx.translate(18, p.t + ph / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "#b0c4de";
+      ctx.font = "11px Inter, sans-serif";
+      ctx.fillText(yTitle, 0, 0);
+      ctx.restore();
+    }
+  }
+
+  // Adiciona suporte a tooltip interativo via hover no Canvas
+  function attachTooltip(canvas, getHoverData) {
+    const parent = canvas.parentElement;
+    if (!parent) return;
+
+    let tooltip = parent.querySelector(".chart-tooltip");
+    if (!tooltip) {
+      tooltip = document.createElement("div");
+      tooltip.className = "chart-tooltip";
+      tooltip.style.position = "absolute";
+      tooltip.style.display = "none";
+      tooltip.style.pointerEvents = "none";
+      tooltip.style.background = "rgba(7, 16, 31, 0.94)";
+      tooltip.style.border = "1px solid #21d4e8";
+      tooltip.style.borderRadius = "6px";
+      tooltip.style.padding = "6px 10px";
+      tooltip.style.fontSize = "11px";
+      tooltip.style.color = "#fff";
+      tooltip.style.zIndex = "50";
+      tooltip.style.boxShadow = "0 8px 20px rgba(0,0,0,0.4)";
+      parent.style.position = "relative";
+      parent.appendChild(tooltip);
+    }
+
+    canvas.onmousemove = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+      const match = getHoverData(mouseX, mouseY);
+
+      if (match) {
+        tooltip.innerHTML = match.html;
+        tooltip.style.display = "block";
+        tooltip.style.left = `${Math.min(rect.width - 150, Math.max(10, mouseX + 14))}px`;
+        tooltip.style.top = `${Math.max(10, mouseY - 30)}px`;
+      } else {
+        tooltip.style.display = "none";
+      }
+    };
+
+    canvas.onmouseleave = () => {
+      tooltip.style.display = "none";
+    };
+  }
+
+  // Exportação do gráfico como imagem PNG
+  function exportAsPNG(canvas, fileName = "grafico-cinetica.png") {
+    const link = document.createElement("a");
+    link.download = fileName;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  }
+
+  // =========================================================================
+  // GRÁFICO 1: Concentração do Produto × Tempo
+  // =========================================================================
+  function drawProductVsTime(canvas, data, options = {}) {
+    if (!data || !data.activePoints || data.activePoints.length === 0) return;
+    const { ctx, w, h, p, pw, ph } = setup(canvas);
+    const points = data.activePoints;
+    const rawPoints = data.rawPoints || points;
+
+    const xMax = Math.max(...points.map(pt => pt.t)) * 1.05 || 1;
+    const yMax = Math.max(...points.map(pt => pt.conc)) * 1.15 || 1;
+    const xMin = 0;
+    const yMin = 0;
+
+    const timeUnit = options.timeUnit || "s";
+    const concUnit = options.concUnit || "mol/L";
+    const pName = options.productName || "P";
+
+    drawAxes(ctx, { w, h, p, pw, ph }, {
+      xMin, xMax, yMin, yMax,
+      xTitle: `Tempo (${timeUnit})`,
+      yTitle: `Concentração [${pName}] (${concUnit})`
+    });
+
+    const toX = (t) => p.l + ((t - xMin) / (xMax - xMin)) * pw;
+    const toY = (c) => h - p.b - ((c - yMin) / (yMax - yMin)) * ph;
+
+    // Curva contínua interpolada (Spline)
+    if (data.spline) {
+      ctx.strokeStyle = palette.cyan;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      const steps = 120;
+      for (let i = 0; i <= steps; i++) {
+        const tVal = (xMax * i) / steps;
+        const cVal = data.spline(tVal).val;
+        const px = toX(tVal);
+        const py = toY(cVal);
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    }
+
+    // Pontos experimentais
+    const pointTargets = [];
+    rawPoints.forEach(pt => {
+      const cx = toX(pt.t);
+      const cy = toY(pt.conc);
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, 5.5, 0, Math.PI * 2);
+      ctx.fillStyle = palette.orange;
+      ctx.fill();
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+
+      pointTargets.push({
+        x: cx,
+        y: cy,
+        html: `<strong>Exp #${pt.id}</strong><br>Tempo: ${pt.t} ${timeUnit}<br>[${pName}]: ${pt.conc.toFixed(4)} ${concUnit}`
+      });
+    });
+
+    // Legenda no topo
+    ctx.textAlign = "right";
+    ctx.font = "10px Inter, sans-serif";
+    ctx.fillStyle = palette.text;
+    ctx.fillText(`● Pontos Experimentais   ― Curva Ajustada`, w - p.r, p.t - 10);
+
+    attachTooltip(canvas, (mx, my) => {
+      return pointTargets.find(pt => Math.hypot(pt.x - mx, pt.y - my) <= 12);
+    });
+  }
+
+  // =========================================================================
+  // GRÁFICO 2: Velocidade Média × Tempo (posicionada em t_médio)
+  // =========================================================================
+  function drawAverageRateVsTime(canvas, data, options = {}) {
+    if (!data || !data.average || !data.average.intervals || data.average.intervals.length === 0) return;
+    const { ctx, w, h, p, pw, ph } = setup(canvas);
+    const intervals = data.average.intervals;
+
+    const xMax = Math.max(...intervals.map(iv => iv.t2)) * 1.05 || 1;
+    const allV = intervals.map(iv => iv.vReaction);
+    let yMax = Math.max(...allV) * 1.25;
+    let yMin = Math.min(0, Math.min(...allV) * 1.25);
+    if (yMax <= yMin) yMax = yMin + 1;
+
+    const timeUnit = options.timeUnit || "s";
+    const concUnit = options.concUnit || "mol/L";
+    const rateUnit = `${concUnit}·${timeUnit}⁻¹`;
+
+    drawAxes(ctx, { w, h, p, pw, ph }, {
+      xMin: 0, xMax, yMin, yMax,
+      xTitle: `Tempo Médio do Intervalo (${timeUnit})`,
+      yTitle: `Velocidade Média (${rateUnit})`
+    });
+
+    const toX = (t) => p.l + (t / xMax) * pw;
+    const toY = (v) => h - p.b - ((v - yMin) / (yMax - yMin)) * ph;
+
+    // Linha de degraus para os intervalos
+    ctx.strokeStyle = "rgba(154, 124, 255, 0.45)";
+    ctx.lineWidth = 1.5;
+    intervals.forEach(iv => {
+      const x1 = toX(iv.t1);
+      const x2 = toX(iv.t2);
+      const y = toY(iv.vReaction);
+      ctx.beginPath();
+      ctx.moveTo(x1, y);
+      ctx.lineTo(x2, y);
+      ctx.stroke();
+    });
+
+    // Linha conectando os pontos médios
+    ctx.strokeStyle = palette.violet;
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    intervals.forEach((iv, i) => {
+      const cx = toX(iv.tMid);
+      const cy = toY(iv.vReaction);
+      if (i === 0) ctx.moveTo(cx, cy);
+      else ctx.lineTo(cx, cy);
+    });
+    ctx.stroke();
+
+    // Pontos nos instantes médios
+    const pointTargets = [];
+    intervals.forEach(iv => {
+      const cx = toX(iv.tMid);
+      const cy = toY(iv.vReaction);
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, 5.5, 0, Math.PI * 2);
+      ctx.fillStyle = palette.violet;
+      ctx.fill();
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+
+      pointTargets.push({
+        x: cx,
+        y: cy,
+        html: `<strong>Intervalo [${iv.t1} a ${iv.t2} ${timeUnit}]</strong><br>Instante médio: ${iv.tMid.toFixed(1)} ${timeUnit}<br>v_méd = ${iv.vReaction.toFixed(6)} ${rateUnit}`
+      });
+    });
+
+    attachTooltip(canvas, (mx, my) => {
+      return pointTargets.find(pt => Math.hypot(pt.x - mx, pt.y - my) <= 12);
+    });
+  }
+
+  // =========================================================================
+  // GRÁFICO 3: Velocidade Instantânea × Tempo (Diferenciação Numérica)
+  // =========================================================================
+  function drawInstantaneousVsTime(canvas, data, options = {}) {
+    if (!data || !data.instantaneous || data.instantaneous.length === 0) return;
+    const { ctx, w, h, p, pw, ph } = setup(canvas);
+    const rates = data.instantaneous;
+
+    const xMax = Math.max(...rates.map(r => r.t)) * 1.05 || 1;
+    const allV = rates.map(r => r.vReaction);
+    let yMax = Math.max(...allV) * 1.25;
+    let yMin = Math.min(0, Math.min(...allV) * 1.25);
+    if (yMax <= yMin) yMax = yMin + 1;
+
+    const timeUnit = options.timeUnit || "s";
+    const concUnit = options.concUnit || "mol/L";
+    const rateUnit = `${concUnit}·${timeUnit}⁻¹`;
+
+    drawAxes(ctx, { w, h, p, pw, ph }, {
+      xMin: 0, xMax, yMin, yMax,
+      xTitle: `Tempo (${timeUnit})`,
+      yTitle: `Velocidade Instantânea v(t) (${rateUnit})`
+    });
+
+    const toX = (t) => p.l + (t / xMax) * pw;
+    const toY = (v) => h - p.b - ((v - yMin) / (yMax - yMin)) * ph;
+
+    // Curva suave de velocidade instantânea se spline disponível
+    if (data.spline && data.nu) {
+      ctx.strokeStyle = palette.green;
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      const steps = 100;
+      for (let i = 0; i <= steps; i++) {
+        const tVal = (xMax * i) / steps;
+        const vVal = (1 / data.nu) * data.spline(tVal).deriv;
+        const px = toX(tVal);
+        const py = toY(vVal);
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    }
+
+    // Pontos discretos calculados por diferenças finitas
+    const pointTargets = [];
+    rates.forEach(r => {
+      const cx = toX(r.t);
+      const cy = toY(r.vReaction);
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, 5.5, 0, Math.PI * 2);
+      ctx.fillStyle = palette.green;
+      ctx.fill();
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+
+      pointTargets.push({
+        x: cx,
+        y: cy,
+        html: `<strong>Instante: ${r.t} ${timeUnit}</strong><br>v_inst: ${r.vReaction.toFixed(6)} ${rateUnit}<br><small>${r.method}</small>`
+      });
+    });
+
+    attachTooltip(canvas, (mx, my) => {
+      return pointTargets.find(pt => Math.hypot(pt.x - mx, pt.y - my) <= 12);
+    });
+  }
+
+  // =========================================================================
+  // GRÁFICO 4: Velocidade × Concentração do Produto
+  // =========================================================================
+  function drawRateVsProduct(canvas, data, options = {}) {
+    if (!data || !data.instantaneous || data.instantaneous.length === 0) return;
+    const { ctx, w, h, p, pw, ph } = setup(canvas);
+    const rates = data.instantaneous;
+
+    const xMax = Math.max(...rates.map(r => r.conc)) * 1.15 || 1;
+    const allV = rates.map(r => r.vReaction);
+    let yMax = Math.max(...allV) * 1.25;
+    let yMin = Math.min(0, Math.min(...allV) * 1.25);
+    if (yMax <= yMin) yMax = yMin + 1;
+
+    const concUnit = options.concUnit || "mol/L";
+    const timeUnit = options.timeUnit || "s";
+    const rateUnit = `${concUnit}·${timeUnit}⁻¹`;
+    const pName = options.productName || "P";
+
+    drawAxes(ctx, { w, h, p, pw, ph }, {
+      xMin: 0, xMax, yMin, yMax,
+      xTitle: `Concentração do Produto [${pName}] (${concUnit})`,
+      yTitle: `Velocidade v (${rateUnit})`
+    });
+
+    const toX = (c) => p.l + (c / xMax) * pw;
+    const toY = (v) => h - p.b - ((v - yMin) / (yMax - yMin)) * ph;
+
+    // Linha conectando a evolução temporal
+    ctx.strokeStyle = "rgba(255, 137, 88, 0.4)";
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    rates.forEach((r, i) => {
+      const cx = toX(r.conc);
+      const cy = toY(r.vReaction);
+      if (i === 0) ctx.moveTo(cx, cy);
+      else ctx.lineTo(cx, cy);
+    });
+    ctx.stroke();
+
+    const pointTargets = [];
+    rates.forEach(r => {
+      const cx = toX(r.conc);
+      const cy = toY(r.vReaction);
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, 5.5, 0, Math.PI * 2);
+      ctx.fillStyle = palette.orange;
+      ctx.fill();
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+
+      pointTargets.push({
+        x: cx,
+        y: cy,
+        html: `<strong>t = ${r.t} ${timeUnit}</strong><br>[${pName}]: ${r.conc.toFixed(4)} ${concUnit}<br>v: ${r.vReaction.toFixed(6)} ${rateUnit}`
+      });
+    });
+
+    attachTooltip(canvas, (mx, my) => {
+      return pointTargets.find(pt => Math.hypot(pt.x - mx, pt.y - my) <= 12);
+    });
+  }
+
+  // =========================================================================
+  // GRÁFICO 5: Concentração de Reagentes e Produtos × Tempo
+  // =========================================================================
+  function drawReactantsAndProducts(canvas, data, options = {}) {
+    const { ctx, w, h, p, pw, ph } = setup(canvas);
+
+    if (!data || !data.kineticsFit || !data.kineticsFit.available) {
+      ctx.clearRect(0, 0, w, h);
+      ctx.font = "12px Inter, sans-serif";
+      ctx.fillStyle = palette.text;
+      ctx.textAlign = "center";
+      ctx.fillText("Insira a concentração inicial do reagente [A]₀ na seção de configuração", w / 2, h / 2 - 10);
+      ctx.fillText("para calcular as curvas de consumo do reagente e estequiometria.", w / 2, h / 2 + 10);
+      return;
+    }
+
+    const reactantData = data.kineticsFit.reactantData;
+    const xMax = Math.max(...reactantData.map(d => d.t)) * 1.05 || 1;
+    const yMax = Math.max(...reactantData.flatMap(d => [d.concA, d.concP])) * 1.15 || 1;
+
+    const timeUnit = options.timeUnit || "s";
+    const concUnit = options.concUnit || "mol/L";
+
+    drawAxes(ctx, { w, h, p, pw, ph }, {
+      xMin: 0, xMax, yMin: 0, yMax,
+      xTitle: `Tempo (${timeUnit})`,
+      yTitle: `Concentração (${concUnit})`
+    });
+
+    const toX = (t) => p.l + (t / xMax) * pw;
+    const toY = (c) => h - p.b - (c / yMax) * ph;
+
+    // Curva do Reagente [A] (Laranja)
+    ctx.strokeStyle = palette.orange;
+    ctx.lineWidth = 2.4;
+    ctx.beginPath();
+    reactantData.forEach((d, i) => {
+      const cx = toX(d.t);
+      const cy = toY(d.concA);
+      if (i === 0) ctx.moveTo(cx, cy);
+      else ctx.lineTo(cx, cy);
+    });
+    ctx.stroke();
+
+    // Curva do Produto [P] (Ciano)
+    ctx.strokeStyle = palette.cyan;
+    ctx.lineWidth = 2.4;
+    ctx.beginPath();
+    reactantData.forEach((d, i) => {
+      const cx = toX(d.t);
+      const cy = toY(d.concP);
+      if (i === 0) ctx.moveTo(cx, cy);
+      else ctx.lineTo(cx, cy);
+    });
+    ctx.stroke();
+
+    // Pontos
+    const pointTargets = [];
+    reactantData.forEach(d => {
+      const cx = toX(d.t);
+      const cyA = toY(d.concA);
+      const cyP = toY(d.concP);
+
+      ctx.beginPath();
+      ctx.arc(cx, cyA, 4.5, 0, Math.PI * 2);
+      ctx.fillStyle = palette.orange;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(cx, cyP, 4.5, 0, Math.PI * 2);
+      ctx.fillStyle = palette.cyan;
+      ctx.fill();
+
+      pointTargets.push({
+        x: cx,
+        y: cyA,
+        html: `<strong>t = ${d.t} ${timeUnit}</strong><br>[Reagente A]: ${d.concA.toFixed(4)} ${concUnit}`
+      });
+      pointTargets.push({
+        x: cx,
+        y: cyP,
+        html: `<strong>t = ${d.t} ${timeUnit}</strong><br>[Produto P]: ${d.concP.toFixed(4)} ${concUnit}`
+      });
+    });
+
+    // Legenda no topo
+    ctx.font = "10px Inter, sans-serif";
+    ctx.textAlign = "right";
+    ctx.fillStyle = palette.orange;
+    ctx.fillText("― [A] Reagente   ", w - p.r - 100, p.t - 10);
+    ctx.fillStyle = palette.cyan;
+    ctx.fillText("― [P] Produto", w - p.r, p.t - 10);
+
+    attachTooltip(canvas, (mx, my) => {
+      return pointTargets.find(pt => Math.hypot(pt.x - mx, pt.y - my) <= 12);
+    });
+  }
+
+  // =========================================================================
+  // GRÁFICO 6: Tangente Interativa à Curva de Concentração
+  // =========================================================================
+  function drawInteractiveTangent(canvas, data, selectedTime, options = {}) {
+    if (!data || !data.activePoints || data.activePoints.length === 0) return null;
+    const { ctx, w, h, p, pw, ph } = setup(canvas);
+    const points = data.activePoints;
+    const nu = data.nu || 1;
+
+    const xMin = points[0].t;
+    const xMax = points[points.length - 1].t;
+    const yMin = 0;
+    const yMax = Math.max(...points.map(pt => pt.conc)) * 1.25 || 1;
+
+    const timeUnit = options.timeUnit || "s";
+    const concUnit = options.concUnit || "mol/L";
+    const pName = options.productName || "P";
+
+    drawAxes(ctx, { w, h, p, pw, ph }, {
+      xMin, xMax, yMin, yMax,
+      xTitle: `Tempo (${timeUnit})`,
+      yTitle: `Concentração [${pName}] (${concUnit})`
+    });
+
+    const toX = (t) => p.l + ((t - xMin) / (xMax - xMin)) * pw;
+    const toY = (c) => h - p.b - ((c - yMin) / (yMax - yMin)) * ph;
+
+    // Curva contínua do produto [P](t)
+    if (data.spline) {
+      ctx.strokeStyle = palette.cyan;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      const steps = 140;
+      for (let i = 0; i <= steps; i++) {
+        const tVal = xMin + ((xMax - xMin) * i) / steps;
+        const cVal = data.spline(tVal).val;
+        const px = toX(tVal);
+        const py = toY(cVal);
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    }
+
+    // Avaliação no instante t* selecionado
+    const tTarget = Math.max(xMin, Math.min(xMax, selectedTime !== undefined ? selectedTime : xMin));
+    const evalResult = data.spline ? data.spline(tTarget) : { val: points[0].conc, deriv: 0 };
+    const pVal = evalResult.val;
+    const dPdt = evalResult.deriv; // Inclinação da reta tangente = taxa de formação d[P]/dt
+    const vReaction = (1 / nu) * dPdt; // Velocidade da reação corrigida por ν
+
+    const tSpan = xMax - xMin;
+    const deltaT = tSpan * 0.22; // Comprimento visual da reta tangente
+    const tA = Math.max(xMin, tTarget - deltaT);
+    const tB = Math.min(xMax, tTarget + deltaT);
+    const pA = pVal + dPdt * (tA - tTarget);
+    const pB = pVal + dPdt * (tB - tTarget);
+
+    // Traçado da reta tangente (Laranja brilhante)
+    ctx.strokeStyle = palette.tangent;
+    ctx.lineWidth = 2.8;
+    ctx.beginPath();
+    ctx.moveTo(toX(tA), toY(pA));
+    ctx.lineTo(toX(tB), toY(pB));
+    ctx.stroke();
+
+    // Linha tracejada projetando no eixo X
+    const cx = toX(tTarget);
+    const cy = toY(pVal);
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
     ctx.setLineDash([4, 4]);
     ctx.beginPath();
-    ctx.moveTo(p.l, h - p.b);
-    ctx.lineTo(w - p.r, p.t);
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx, h - p.b);
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Pontos Experimentais
-    results.experiments.forEach(e => {
-      const cx = p.l + (e.v_pred / maxV) * pw;
-      const cy = h - p.b - (e.v_obs / maxV) * ph;
+    // Ponto de tangência em destaque (círculo com borda dupla)
+    ctx.beginPath();
+    ctx.arc(cx, cy, 7, 0, Math.PI * 2);
+    ctx.fillStyle = palette.tangent;
+    ctx.fill();
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    // Legenda no topo
+    ctx.font = "10px Inter, sans-serif";
+    ctx.textAlign = "right";
+    ctx.fillStyle = palette.cyan;
+    ctx.fillText("― Concentração [P]   ", w - p.r - 95, p.t - 10);
+    ctx.fillStyle = palette.tangent;
+    ctx.fillText("― Reta Tangente", w - p.r, p.t - 10);
+
+    return {
+      t: tTarget,
+      conc: pVal,
+      dPdt,
+      vReaction,
+      nu
+    };
+  }
+
+  // =========================================================================
+  // GRÁFICO 7: Linearização Cinética ([A], ln[A], 1/[A])
+  // =========================================================================
+  function drawKineticsLinearization(canvas, fitModel, orderType = "order1", options = {}) {
+    const { ctx, w, h, p, pw, ph } = setup(canvas);
+
+    if (!fitModel || !fitModel.available || !fitModel.models[orderType]) {
+      ctx.clearRect(0, 0, w, h);
+      ctx.font = "12px Inter, sans-serif";
+      ctx.fillStyle = palette.text;
+      ctx.textAlign = "center";
+      ctx.fillText("Dados insuficientes para ajuste linear.", w / 2, h / 2);
+      return;
+    }
+
+    const model = fitModel.models[orderType];
+    const rawData = fitModel.reactantData;
+    const timeUnit = options.timeUnit || "s";
+
+    let yLabel = "[A]";
+    let points = [];
+    if (orderType === "order0") {
+      yLabel = "[A] (mol/L)";
+      points = rawData.map(d => ({ x: d.t, y: d.concA }));
+    } else if (orderType === "order1") {
+      yLabel = "ln[A]";
+      points = rawData.map(d => ({ x: d.t, y: Math.log(Math.max(1e-12, d.concA)) }));
+    } else if (orderType === "order2") {
+      yLabel = "1/[A] (L/mol)";
+      points = rawData.map(d => ({ x: d.t, y: 1 / Math.max(1e-12, d.concA) }));
+    }
+
+    const xVals = points.map(pt => pt.x);
+    const yVals = points.map(pt => pt.y);
+    const xMin = 0;
+    const xMax = Math.max(...xVals) * 1.05 || 1;
+    const yMin = Math.min(...yVals) * 1.05;
+    const yMax = Math.max(...yVals) * 1.05;
+
+    drawAxes(ctx, { w, h, p, pw, ph }, {
+      xMin, xMax, yMin, yMax,
+      xTitle: `Tempo (${timeUnit})`,
+      yTitle: yLabel
+    });
+
+    const toX = (x) => p.l + (x / xMax) * pw;
+    const toY = (y) => h - p.b - ((y - yMin) / (yMax - yMin || 1)) * ph;
+
+    // Reta ajustada
+    const yA = model.intercept;
+    const yB = model.intercept + model.slope * xMax;
+    ctx.strokeStyle = palette.orange;
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.moveTo(toX(0), toY(yA));
+    ctx.lineTo(toX(xMax), toY(yB));
+    ctx.stroke();
+
+    // Pontos
+    points.forEach(pt => {
+      const cx = toX(pt.x);
+      const cy = toY(pt.y);
 
       ctx.beginPath();
       ctx.arc(cx, cy, 5.5, 0, Math.PI * 2);
@@ -120,325 +740,101 @@ window.KineticsCharts = (() => {
       ctx.strokeStyle = "#fff";
       ctx.lineWidth = 1.5;
       ctx.stroke();
-
-      // Rótulo do experimento
-      ctx.fillStyle = "#edf6ff";
-      ctx.font = "9px Inter, sans-serif";
-      ctx.textAlign = "left";
-      ctx.textBaseline = "bottom";
-      ctx.fillText(`Exp ${e.id}`, cx + 8, cy - 2);
     });
 
-    // Legenda no topo
-    ctx.font = "10px Inter, sans-serif";
+    // Legenda
     ctx.textAlign = "right";
+    ctx.font = "10px Inter, sans-serif";
     ctx.fillStyle = palette.text;
-    ctx.fillText(`R² = ${results.r2.toFixed(4)}`, w - p.r, p.t - 10);
+    ctx.fillText(`${model.name} | R² = ${model.r2.toFixed(4)} | k = ${model.k.toFixed(4)} ${model.unit}`, w - p.r, p.t - 10);
   }
 
-  // GRÁFICO 2: RESÍDUOS POR EXPERIMENTO
-  function drawResiduals(canvas, results) {
-    if (!results || !results.experiments || results.experiments.length === 0) return;
-    const { ctx, w, h, p } = setup(canvas);
-    const pw = w - p.l - p.r;
-    const ph = h - p.t - p.b;
+  // =========================================================================
+  // GRÁFICO 8: Comparação Multi-Experimental (Sobreposição)
+  // =========================================================================
+  function drawExperimentComparison(canvas, experimentsList, options = {}) {
+    if (!experimentsList || experimentsList.length === 0) return;
+    const { ctx, w, h, p, pw, ph } = setup(canvas);
 
-    const resids = results.experiments.map(e => e.resid);
-    const maxAbsRes = Math.max(...resids.map(Math.abs), 1e-6) * 1.3;
+    const colors = [palette.cyan, palette.orange, palette.green, palette.violet, palette.pink, palette.yellow];
 
-    ctx.clearRect(0, 0, w, h);
-
-    // Linha Zero
-    const yZero = p.t + ph / 2;
-    ctx.strokeStyle = palette.axis;
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(p.l, yZero);
-    ctx.lineTo(w - p.r, yZero);
-    ctx.stroke();
-
-    // Grid Horizontal e Valores no Eixo Y
-    ctx.font = "10px Inter, sans-serif";
-    ctx.strokeStyle = palette.grid;
-    ctx.lineWidth = 1;
-    ctx.textAlign = "right";
-    ctx.textBaseline = "middle";
-    ctx.fillStyle = palette.text;
-
-    [-maxAbsRes, 0, maxAbsRes].forEach((val, i) => {
-      const y = p.t + (ph * (2 - i)) / 2;
-      ctx.fillText(formatNum(val), p.l - 8, y);
-    });
-
-    // Eixo X e Barras/Pontos de Resíduo
-    const n = results.experiments.length;
-    results.experiments.forEach((e, idx) => {
-      const cx = p.l + ((idx + 0.5) / n) * pw;
-      const cy = yZero - (e.resid / maxAbsRes) * (ph / 2);
-
-      // Linha vertical de dispersão
-      ctx.strokeStyle = e.resid >= 0 ? palette.cyan : palette.orange;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(cx, yZero);
-      ctx.lineTo(cx, cy);
-      ctx.stroke();
-
-      // Ponto
-      ctx.beginPath();
-      ctx.arc(cx, cy, 5, 0, Math.PI * 2);
-      ctx.fillStyle = e.resid >= 0 ? palette.cyan : palette.orange;
-      ctx.fill();
-
-      // Rótulo Exp
-      ctx.fillStyle = palette.text;
-      ctx.font = "10px Inter, sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "top";
-      ctx.fillText(`Exp ${e.id}`, cx, h - p.b + 8);
-    });
-
-    // Título do Eixo X
-    ctx.textAlign = "center";
-    ctx.textBaseline = "bottom";
-    ctx.fillStyle = "#b0c4de";
-    ctx.font = "11px Inter, sans-serif";
-    ctx.fillText("Experimentos Analisados", p.l + pw / 2, h - 8);
-
-    // Título do Eixo Y (Isolado à esquerda)
-    ctx.save();
-    ctx.translate(18, p.t + ph / 2);
-    ctx.rotate(-Math.PI / 2);
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("Resíduo (v_obs - v_pred)", 0, 0);
-    ctx.restore();
-  }
-
-  // GRÁFICO 3: SENSIBILIDADE (Concentração vs Velocidade)
-  function drawSensitivity(canvas, results) {
-    if (!results || !results.reagents || results.reagents.length === 0) return;
-    const { ctx, w, h, p } = setup(canvas);
-    const pw = w - p.l - p.r;
-    const ph = h - p.t - p.b;
-
-    ctx.clearRect(0, 0, w, h);
-
-    const colors = [palette.cyan, palette.orange, palette.violet];
-    const steps = 60;
-    const cMax = 2.0;
-
-    let maxRate = 0;
-    const curves = results.reagents.map((reagent, rIdx) => {
-      const order = reagent.order;
-      const points = [];
-      for (let s = 0; s <= steps; s++) {
-        const conc = (cMax * s) / steps;
-        const rate = Math.pow(Math.max(conc, 0), order);
-        points.push({ conc, rate });
-        if (rate > maxRate) maxRate = rate;
+    // Encontrar máximos globais para escala conjunta
+    let xMax = 0;
+    let yMax = 0;
+    experimentsList.forEach(exp => {
+      if (exp.analysis && exp.analysis.activePoints) {
+        exp.analysis.activePoints.forEach(pt => {
+          if (pt.t > xMax) xMax = pt.t;
+          if (pt.conc > yMax) yMax = pt.conc;
+        });
       }
-      return { reagent, points, color: colors[rIdx % colors.length] };
     });
 
-    if (maxRate <= 0) maxRate = 1;
+    xMax = xMax * 1.05 || 1;
+    yMax = yMax * 1.15 || 1;
 
-    // Grid e Eixos
-    ctx.font = "10px Inter, sans-serif";
-    ctx.strokeStyle = palette.grid;
-    ctx.lineWidth = 1;
+    const timeUnit = options.timeUnit || "s";
+    const concUnit = options.concUnit || "mol/L";
 
-    for (let i = 0; i <= 4; i++) {
-      const y = p.t + ph * (1 - i / 4);
-      ctx.beginPath();
-      ctx.moveTo(p.l, y);
-      ctx.lineTo(w - p.r, y);
-      ctx.stroke();
+    drawAxes(ctx, { w, h, p, pw, ph }, {
+      xMin: 0, xMax, yMin: 0, yMax,
+      xTitle: `Tempo (${timeUnit})`,
+      yTitle: `Concentração do Produto (${concUnit})`
+    });
 
-      // Valores Y alinhados à direita
-      ctx.textAlign = "right";
-      ctx.textBaseline = "middle";
-      ctx.fillStyle = palette.text;
-      ctx.fillText(((maxRate * i) / 4).toFixed(1), p.l - 8, y);
+    const toX = (t) => p.l + (t / xMax) * pw;
+    const toY = (c) => h - p.b - (c / yMax) * ph;
 
-      const x = p.l + (pw * i) / 4;
-      ctx.beginPath();
-      ctx.moveTo(x, p.t);
-      ctx.lineTo(x, h - p.b);
-      ctx.stroke();
+    // Curvas sobrepostas
+    experimentsList.forEach((exp, idx) => {
+      const color = colors[idx % colors.length];
+      const pts = exp.analysis ? exp.analysis.activePoints : [];
+      if (pts.length === 0) return;
 
-      // Valores X
-      ctx.textAlign = "center";
-      ctx.textBaseline = "top";
-      ctx.fillText(((cMax * i) / 4).toFixed(1), x, h - p.b + 8);
-    }
-
-    // Título do Eixo X
-    ctx.textAlign = "center";
-    ctx.textBaseline = "bottom";
-    ctx.fillStyle = "#b0c4de";
-    ctx.font = "11px Inter, sans-serif";
-    ctx.fillText("Concentração relativa do reagente (u.a.)", p.l + pw / 2, h - 8);
-
-    // Título do Eixo Y (Isolado à esquerda)
-    ctx.save();
-    ctx.translate(18, p.t + ph / 2);
-    ctx.rotate(-Math.PI / 2);
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("Velocidade relativa calculada (u.a.)", 0, 0);
-    ctx.restore();
-
-    // Traçado das curvas
-    curves.forEach((curve, i) => {
-      ctx.strokeStyle = curve.color;
+      ctx.strokeStyle = color;
       ctx.lineWidth = 2.4;
       ctx.beginPath();
-      curve.points.forEach((pt, idx) => {
-        const x = p.l + (pt.conc / cMax) * pw;
-        const y = h - p.b - (pt.rate / maxRate) * ph;
-        if (idx === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
+      pts.forEach((pt, i) => {
+        const cx = toX(pt.t);
+        const cy = toY(pt.conc);
+        if (i === 0) ctx.moveTo(cx, cy);
+        else ctx.lineTo(cx, cy);
       });
       ctx.stroke();
 
-      // Legenda no topo
-      const legX = p.l + i * 115;
-      ctx.fillStyle = curve.color;
-      ctx.fillRect(legX, p.t - 16, 9, 9);
-      ctx.fillStyle = "#edf6ff";
-      ctx.font = "10px Inter, sans-serif";
-      ctx.textAlign = "left";
-      ctx.textBaseline = "top";
-      ctx.fillText(`[${curve.reagent.name}] (ordem ${curve.reagent.order.toFixed(2)})`, legX + 13, p.t - 17);
-    });
-  }
-
-  // GRÁFICO 4: ARRHENIUS (ln(k) vs 1000/T)
-  function drawArrhenius(canvas, arrheniusData) {
-    if (!arrheniusData || !arrheniusData.points || arrheniusData.points.length < 2) {
-      const { ctx, w, h } = setup(canvas);
-      ctx.clearRect(0, 0, w, h);
-      ctx.font = "12px Inter, sans-serif";
-      ctx.fillStyle = palette.text;
-      ctx.textAlign = "center";
-      ctx.fillText("Insira pelo menos 2 temperaturas para traçar Arrhenius.", w / 2, h / 2);
-      return;
-    }
-
-    const { ctx, w, h, p } = setup(canvas);
-    const pw = w - p.l - p.r;
-    const ph = h - p.t - p.b;
-
-    ctx.clearRect(0, 0, w, h);
-
-    const xVals = arrheniusData.points.map(pt => pt.invT * 1000);
-    const yVals = arrheniusData.points.map(pt => pt.lnK);
-
-    const minX = Math.min(...xVals) * 0.97;
-    const maxX = Math.max(...xVals) * 1.03;
-    const minY = Math.min(...yVals) * 1.05;
-    const maxY = Math.max(...yVals) * 0.95;
-
-    const spanX = maxX - minX || 1;
-    const spanY = maxY - minY || 1;
-
-    // Grid e Eixos
-    ctx.font = "10px Inter, sans-serif";
-    ctx.strokeStyle = palette.grid;
-    ctx.lineWidth = 1;
-
-    for (let i = 0; i <= 4; i++) {
-      const y = p.t + ph * (1 - i / 4);
-      ctx.beginPath();
-      ctx.moveTo(p.l, y);
-      ctx.lineTo(w - p.r, y);
-      ctx.stroke();
-
-      // Valores Y alinhados à direita
-      ctx.textAlign = "right";
-      ctx.textBaseline = "middle";
-      ctx.fillStyle = palette.text;
-      ctx.fillText((minY + (spanY * i) / 4).toFixed(2), p.l - 8, y);
-
-      const x = p.l + (pw * i) / 4;
-      ctx.beginPath();
-      ctx.moveTo(x, p.t);
-      ctx.lineTo(x, h - p.b);
-      ctx.stroke();
-
-      // Valores X
-      ctx.textAlign = "center";
-      ctx.textBaseline = "top";
-      ctx.fillText((minX + (spanX * i) / 4).toFixed(2), x, h - p.b + 8);
-    }
-
-    // Título do Eixo X
-    ctx.textAlign = "center";
-    ctx.textBaseline = "bottom";
-    ctx.fillStyle = "#b0c4de";
-    ctx.font = "11px Inter, sans-serif";
-    ctx.fillText("1000 / T (K⁻¹)", p.l + pw / 2, h - 8);
-
-    // Título do Eixo Y (Isolado à esquerda)
-    ctx.save();
-    ctx.translate(18, p.t + ph / 2);
-    ctx.rotate(-Math.PI / 2);
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("ln(k)", 0, 0);
-    ctx.restore();
-
-    // Reta ajustada
-    const x1 = minX, x2 = maxX;
-    const y1 = arrheniusData.fit(x1 / 1000);
-    const y2 = arrheniusData.fit(x2 / 1000);
-
-    ctx.strokeStyle = palette.orange;
-    ctx.lineWidth = 2.2;
-    ctx.beginPath();
-    ctx.moveTo(p.l + ((x1 - minX) / spanX) * pw, h - p.b - ((y1 - minY) / spanY) * ph);
-    ctx.lineTo(p.l + ((x2 - minX) / spanX) * pw, h - p.b - ((y2 - minY) / spanY) * ph);
-    ctx.stroke();
-
-    // Pontos experimentais
-    arrheniusData.points.forEach((pt) => {
-      const cx = p.l + ((pt.invT * 1000 - minX) / spanX) * pw;
-      const cy = h - p.b - ((pt.lnK - minY) / spanY) * ph;
-
-      ctx.beginPath();
-      ctx.arc(cx, cy, 5.5, 0, Math.PI * 2);
-      ctx.fillStyle = palette.violet;
-      ctx.fill();
-      ctx.strokeStyle = "#fff";
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-
-      ctx.fillStyle = "#edf6ff";
-      ctx.font = "9px Inter, sans-serif";
-      ctx.textAlign = "left";
-      ctx.textBaseline = "bottom";
-      ctx.fillText(`${pt.tempC}°C`, cx + 8, cy - 2);
+      pts.forEach(pt => {
+        ctx.beginPath();
+        ctx.arc(toX(pt.t), toY(pt.conc), 4, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+      });
     });
 
     // Legenda no topo
+    let legOffset = 0;
     ctx.font = "10px Inter, sans-serif";
-    ctx.textAlign = "right";
-    ctx.fillStyle = palette.text;
-    ctx.fillText(`Ea = ${arrheniusData.ea.toFixed(2)} kJ/mol | R² = ${arrheniusData.r2.toFixed(4)}`, w - p.r, p.t - 10);
+    experimentsList.forEach((exp, idx) => {
+      const color = colors[idx % colors.length];
+      const name = exp.name || `Exp ${idx + 1}`;
+      ctx.fillStyle = color;
+      ctx.fillRect(p.l + legOffset, p.t - 16, 9, 9);
+      ctx.fillStyle = palette.textBright;
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText(name, p.l + legOffset + 13, p.t - 11);
+      legOffset += ctx.measureText(name).width + 30;
+    });
   }
 
   return {
-    renderAll(results, arrheniusData) {
-      const parityEl = document.querySelector("#parityChart");
-      const residEl = document.querySelector("#residualsChart");
-      const sensEl = document.querySelector("#sensitivityChart");
-      const arrhEl = document.querySelector("#arrheniusChart");
-
-      if (parityEl) drawParity(parityEl, results);
-      if (residEl) drawResiduals(residEl, results);
-      if (sensEl) drawSensitivity(sensEl, results);
-      if (arrhEl && arrheniusData) drawArrhenius(arrhEl, arrheniusData);
-    }
+    drawProductVsTime,
+    drawAverageRateVsTime,
+    drawInstantaneousVsTime,
+    drawRateVsProduct,
+    drawReactantsAndProducts,
+    drawInteractiveTangent,
+    drawKineticsLinearization,
+    drawExperimentComparison,
+    exportAsPNG
   };
 })();

@@ -1,6 +1,6 @@
 {
-  "title": "Simulador de Cinética Química | Método das Velocidades Iniciais",
-  "description": "Desenvolvimento de um Simulador Computacional para Determinação da Lei de Velocidade e da Constante Cinética pelo Método das Velocidades Iniciais via Regressão Linear Múltipla.",
+  "title": "Kinetics Lab — Laboratório Virtual de Análise Cinética Experimental",
+  "description": "Determinação da velocidade de reações químicas por métodos numéricos aplicados à concentração de produtos.",
   "robots": {
     "index": true
   },

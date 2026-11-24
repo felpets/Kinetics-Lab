@@ -1,129 +1,171 @@
-# Desenvolvimento de um Simulador Computacional para Determinação da Lei de Velocidade e da Constante Cinética pelo Método das Velocidades Iniciais
+# Kinetics Lab — Laboratório Virtual de Análise Cinética Experimental
 
 > *Projeto Acadêmico para minha Noiva*
 
 🌐 **Versão Online Publicada:** [https://kinetics-lab-nine.vercel.app](https://kinetics-lab-nine.vercel.app)
 
----
-
-## 🎯 Objetivo
-
-Desenvolver uma ferramenta computacional capaz de determinar experimentalmente a lei de velocidade e a constante cinética de uma reação química a partir das concentrações iniciais dos reagentes e das respectivas velocidades iniciais.
+**Subtítulo:** *Determinação da velocidade de reações químicas por métodos numéricos aplicados à concentração de produtos.*
 
 ---
 
-## 💻 Linguagens e Tecnologias Utilizadas
+## 🎯 Objetivo do Programa
 
-* **HTML5**: Estruturação semântica da aplicação web, tabelas de dados experimentais interativas e elementos de Canvas para os gráficos.
-* **CSS3**: Estilização visual responsiva e moderna com tema dark mode científico, hierarquia visual e compatibilidade multiplataforma (desktop, tablet e mobile).
-* **JavaScript (ES6+)**: Implementação dos algoritmos de tratamento numérico, regressão linear múltipla (solução matricial de Gauss-Jordan), análise estatística de resíduos, motor gráfico vetorial em Canvas e modelos cinéticos em tempo real.
+O **Kinetics Lab** é uma ferramenta computacional e científica voltada à determinação da velocidade de reações químicas a partir de dados experimentais da evolução da concentração de produtos ao longo do tempo.
 
----
+Diferente de simuladores convencionais que deduzem concentrações a partir de constantes cinéticas teóricas pré-definidas, o programa trata a **concentração de produtos como a variável experimental primária de entrada**, aplicando diferenciação numérica e cálculo diferencial para determinar:
 
-## 🔬 Metodologia Computacional
+* **Velocidade média da reação** (global e em cada intervalo temporal).
+* **Velocidade instantânea aproximada** $v(t)$ por métodos numéricos de diferenças finitas.
+* **Velocidade inicial estimada** $v_0$.
+* **Velocidades máxima e mínima** observadas no ensaio.
+* **Interpretação geométrica da derivada** através da reta tangente interativa.
+* **Quantidade total de produto formado** por unidade de volume.
+* **Concentração dos reagentes restantes**, via balanço estequiométrico quando $[A]_0$ for informado.
+* **Ordem cinética estimada e constante de velocidade experimental**, via modelos integrados de velocidade (ordem zero, primeira e segunda ordem).
+* **Comparação multi-experimental** de ensaios sob diferentes condições sem uso de equações de dependência térmica teóricas.
 
-O programa fundamenta-se na **lei diferencial de velocidade** para uma reação química genérica com múltiplos reagentes:
-
-$$v_0 = k \cdot [A]_0^\alpha \cdot [B]_0^\beta \cdot [C]_0^\gamma$$
-
-Para determinar experimentalmente a constante cinética $k$ e as ordens parciais de reação ($\alpha, \beta, \gamma$), o simulador aplica a **transformação logarítmica neperiana**:
-
-$$\ln(v_0) = \ln(k) + \alpha \cdot \ln([A]_0) + \beta \cdot \ln([B]_0) + \gamma \cdot \ln([C]_0)$$
-
-Essa transformação lineariza o modelo não-linear, reduzindo-o a uma formulação de **Regressão Linear Múltipla**:
-
-$$y = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \beta_3 x_3 + \varepsilon$$
-
-Onde:
-* $y = \ln(v_0)$
-* $\beta_0 = \ln(k) \implies k = \exp(\beta_0)$
-* $\beta_1 = \alpha$ (ordem parcial em relação ao reagente A)
-* $\beta_2 = \beta$ (ordem parcial em relação ao reagente B)
-* $\beta_3 = \gamma$ (ordem parcial em relação ao reagente C)
-* $x_j = \ln([R_j]_0)$
-
-### Resolução Matricial por Mínimos Quadrados Ordinários (MQO)
-
-Em notação matricial:
-
-$$\mathbf{y} = \mathbf{X} \boldsymbol{\beta} + \boldsymbol{\varepsilon}$$
-
-$$\hat{\boldsymbol{\beta}} = (\mathbf{X}^T \mathbf{X})^{-1} \mathbf{X}^T \mathbf{y}$$
-
-O simulador resolve analiticamente o sistema de equações normais via eliminação de Gauss-Jordan com pivoteamento parcial, obtendo:
-1. **Ordens parciais exatas e aproximadas** ($\alpha, \beta, \dots$) e a **ordem global da reação** ($n = \sum \alpha_j$).
-2. **Constante cinética $k$** e determinação dimensional automática de sua unidade: $(\text{mol}\cdot\text{L}^{-1})^{1-n} \cdot \text{s}^{-1}$.
-3. **Velocidades previstas pelo modelo:**
-   $$\hat{v}_{0,i} = k \cdot [A]_{0,i}^\alpha \cdot [B]_{0,i}^\beta \dots$$
-4. **Análise de Resíduos:**
-   $$e_i = v_{0,i} - \hat{v}_{0,i}, \quad \text{Erro Relativo (\%)} = \frac{|v_{0,i} - \hat{v}_{0,i}|}{v_{0,i}} \times 100$$
-5. **Métricas Estatísticas de Qualidade de Ajuste:** Coeficiente de Determinação ($R^2$), $R^2$ ajustado e Erro Quadrático Médio (RMSE).
+> [!IMPORTANT]
+> **Diretriz Científica:** O projeto **não utiliza a equação de Arrhenius**, energia de ativação ou fatores pré-exponenciais em nenhuma parte de seus cálculos. Todas as grandezas e taxas são estimadas diretamente dos dados experimentais através de métodos numéricos e cálculo diferencial.
 
 ---
 
-## 📈 Representações Gráficas Integradas
+## 💻 Linguagens e Tecnologias
 
-O software renderiza quatro gráficos interativos em Canvas nativo (sem bibliotecas externas pesadas):
-
-1. **Gráfico de Paridade / Ajuste ($v_{\text{observada}}$ vs. $v_{\text{prevista}}$):** Avalia a aderência do modelo frente à bissetriz ideal $1:1$ ($y = x$).
-2. **Gráfico de Resíduos por Experimento:** Diagnóstico da dispersão e homocedasticidade dos erros para cada ponto experimental.
-3. **Curvas de Sensibilidade Concentração-Velocidade:** Visualização do impacto individual de cada reagente na taxa reacional em função de sua ordem parcial.
-4. **Linearização de Arrhenius ($\ln(k)$ vs $1000/T$):** Determinação da Energia de Ativação ($E_a$) e do Fator Pré-Exponencial ($A_0$) a partir de conjuntos a diferentes temperaturas:
-   $$\ln(k) = \ln(A_0) - \frac{E_a}{R} \cdot \frac{1}{T}$$
+* **HTML5**: Estruturação semântica da aplicação, tabelas de dados dinâmicas e elementos de desenho para Canvas.
+* **CSS3**: Design responsivo moderno com tema dark mode científico, visualização em alta densidade (DPI) e formatação específica para impressão de relatórios em PDF (`@media print`).
+* **JavaScript (ES6+)**: Motor numérico modular (`kinetics-engine.js`), motor gráfico vetorial (`charts.js`) e gerenciador de estado reativo (`app.js`).
+* **Node.js**: Automação de testes científicos automatizados (`test_suite.js`).
 
 ---
 
-## 🧪 Aplicação
+## 🔬 Fundamentação Matemática e Métodos Numéricos
 
-A ferramenta permite:
-* Estudar a influência das concentrações iniciais sobre a velocidade de reação.
-* Comparar diferentes experimentos e prever velocidades para novas concentrações.
-* Analisar a influência da temperatura por meio de conjuntos de dados experimentais independentes.
-* Carregar instantaneamente casos clássicos da literatura química:
-  * $2\,\text{NO} + \text{O}_2 \rightarrow 2\,\text{NO}_2$ (Ordem 2 em NO, 1 em $\text{O}_2$, global 3)
-  * $\text{S}_2\text{O}_8^{2-} + 3\,\text{I}^- \rightarrow 2\,\text{SO}_4^{2-} + \text{I}_3^-$ (Ordem 1 em $\text{S}_2\text{O}_8^{2-}$, 1 em $\text{I}^-$, global 2)
-  * Hidrólise de $(CH_3)_3CCl$ (Ordem 1 em $RCl$, 0 em $OH^-$, pseudo-1ª ordem)
-  * Decomposição de $N_2O_5$ (1 reagente, 1ª ordem)
-  * Reação $BrO_3^- + 5\,Br^- + 6\,H^+$ (3 reagentes, ordens 1, 1 e 2)
+Considere a reação química genérica:
+
+$$aA + bB \longrightarrow cC + dD$$
+
+Ao monitorar experimentalmente a formação de um produto $P$ com coeficiente estequiométrico $\nu$:
+
+### 1. Velocidade Média
+No intervalo de tempo entre $t_i$ e $t_{i+1}$:
+
+$$v_{\text{méd}} = \frac{1}{\nu} \cdot \frac{\Delta [P]}{\Delta t} = \frac{1}{\nu} \cdot \frac{[P]_{i+1} - [P]_i}{t_{i+1} - t_i}$$
+
+* Taxa de formação do produto: $v_P = \frac{\Delta [P]}{\Delta t}$
+* Velocidade da reação: $v = \frac{1}{\nu} v_P$
+
+### 2. Velocidade Instantânea e Métodos de Diferenciação Numérica
+A velocidade instantânea corresponde ao limite e à derivada temporal:
+
+$$v(t) = \frac{1}{\nu} \cdot \frac{d[P]}{dt}$$
+
+Para aproximar numericamente essa derivada a partir de dados discretos:
+
+#### A. Intervalos Uniformes ($\Delta t = \text{constante}$)
+* **Pontos Internos ($0 < i < N$):** Fórmula de Diferença Finita Central de 3 pontos (erro $O(\Delta t^2)$):
+  $$v_i \approx \frac{1}{\nu} \cdot \frac{[P]_{i+1} - [P]_{i-1}}{2\,\Delta t}$$
+* **Extremidade Inicial ($t = t_0$):** Diferença Finita Progressiva de 3 pontos:
+  $$v_0 \approx \frac{1}{\nu} \cdot \frac{-3[P]_0 + 4[P]_1 - [P]_2}{2\,\Delta t}$$
+* **Extremidade Final ($t = t_N$):** Diferença Finita Regressiva de 3 pontos:
+  $$v_N \approx \frac{1}{\nu} \cdot \frac{[P]_{N-2} - 4[P]_{N-1} + 3[P]_N}{2\,\Delta t}$$
+
+#### B. Intervalos Não-Uniformes ($h_1 = t_i - t_{i-1}$, $h_2 = t_{i+1} - t_i$)
+O programa implementa a diferenciação de polinômios interpoladores de Lagrange de 3 pontos:
+
+$$\frac{d[P]}{dt}\Big|_{t_i} \approx \frac{-h_2^2 [P]_{i-1} + (h_2^2 - h_1^2)[P]_i + h_1^2 [P]_{i+1}}{h_1 h_2 (h_1 + h_2)}$$
+
+### 3. Interpretação Geométrica da Reta Tangente
+Graficamente, a taxa de formação $\frac{d[P]}{dt}$ no instante selecionado $t^*$ corresponde exatamente ao **coeficiente angular (inclinação) da reta tangente** à curva de concentração:
+
+$$[P]_{\text{tangente}}(t) = [P](t^*) + \left(\frac{d[P]}{dt}\Big|_{t^*}\right) \cdot (t - t^*)$$
+
+### 4. Relação Estequiométrica com o Reagente
+Para uma reação $aA \rightarrow cP$, em volume constante:
+
+$$[A](t) = [A]_0 - \frac{a}{c} \cdot ([P](t) - [P]_0)$$
+
+### 5. Modelagem Cinética por Leis Integradas
+Quando $[A]_0$ é fornecido, o simulador testa as leis integradas clássicas:
+* **Ordem Zero:** $[A] = [A]_0 - kt$
+* **Primeira Ordem:** $\ln[A] = \ln[A]_0 - kt$
+* **Segunda Ordem:** $\frac{1}{[A]} = \frac{1}{[A]_0} + kt$
+
+A seleção do modelo baseia-se na conjugação entre o $R^2$ da linearização e o Erro Quadrático Médio (RMSE) avaliado na escala original das concentrações.
 
 ---
 
-## 🎓 Finalidade
+## 🏛️ Estrutura da Aplicação (7 Seções)
 
-Proporcionar uma aplicação interativa dos conceitos de cinética química, integrando fundamentação teórica, tratamento matemático de dados e programação computacional.
+1. **01 — Visão geral:** Dashboard com 8 indicadores principais e widget interativo da reta tangente com slider temporal.
+2. **02 — Análise experimental:** Configuração estequiométrica, tabela editável, colar dados de planilha, importar CSV e tabelas de velocidades calculadas.
+3. **03 — Modelagem cinética:** Avaliação comparativa das ordens 0, 1 e 2, com gráficos de linearização $[A]$, $\ln[A]$ e $1/[A]$.
+4. **04 — Comparação de experimentos:** Cadastro e sobreposição visual de múltiplos ensaios experimentais sob diferentes condições.
+5. **05 — Fundamentação teórica:** Artigo científico e pedagógico integrando química geral, cálculo diferencial e incertezas experimentais.
+6. **06 — Validação e memória de cálculo:** Auditoria passo a passo com fórmulas, substituições numéricas de cada intervalo e resultados com unidades.
+7. **07 — Relatórios:** Visualização e geração de relatórios acadêmicos prontos para impressão em PDF e download de dados/velocidades em CSV.
+
+---
+
+## 📊 Gráficos Interativos Implementados
+
+* **Gráfico 1:** Concentração do Produto $[P] \times t$ (pontos experimentais e spline ajustada).
+* **Gráfico 2:** Velocidade Média $v_{\text{méd}} \times t$ (plotada nos instantes médios dos intervalos).
+* **Gráfico 3:** Velocidade Instantânea $v(t) \times t$ (aproximação por derivadas de diferenças finitas).
+* **Gráfico 4:** Velocidade $v \times [P]$ (evolução da rapidez em função da formação do produto).
+* **Gráfico 5:** Concentração de Reagentes $[A]$ e Produtos $[P] \times t$ (balanço estequiométrico).
+* **Gráfico 6:** Tangente Interativa à Curva de Concentração (demonstração visual da derivada geométrica).
+* **Gráfico de Linearização:** Análise dos modelos cinéticos integrados.
+* **Gráfico Comparativo:** Sobreposição multi-experimental com curvas coloridas na mesma escala.
+
+---
+
+## ✅ Critérios de Aceitação Validados
+
+Testados rigorosamente através da suíte automatizada `test_suite.js` utilizando o conjunto padrão com $\nu = 1$:
+
+| Tempo (s) | Concentração (mol/L) |
+|---|---|
+| 0 | 0,000 |
+| 10 | 0,120 |
+| 20 | 0,210 |
+| 30 | 0,290 |
+| 40 | 0,350 |
+| 50 | 0,400 |
+
+### Resultados Esperados e Aprovados:
+* $v_{\text{méd}}(0 \rightarrow 10\text{ s}) = 0{,}012\text{ mol/(L}\cdot\text{s)}$
+* $v_{\text{méd}}(10 \rightarrow 20\text{ s}) = 0{,}009\text{ mol/(L}\cdot\text{s)}$
+* $v_{\text{méd}}(20 \rightarrow 30\text{ s}) = 0{,}008\text{ mol/(L}\cdot\text{s)}$
+* $v_{\text{méd}}(30 \rightarrow 40\text{ s}) = 0{,}006\text{ mol/(L}\cdot\text{s)}$
+* $v_{\text{méd}}(40 \rightarrow 50\text{ s}) = 0{,}005\text{ mol/(L}\cdot\text{s)}$
+* $v_{\text{méd, global}} = 0{,}008\text{ mol/(L}\cdot\text{s)}$
+* $v_{\text{inst}}(t = 10\text{ s}) = 0{,}0105\text{ mol/(L}\cdot\text{s)}$
 
 ---
 
 ## 🚀 Como Executar Localmente
 
-### Opção 1: Execução em 1 clique no Windows (Recomendado)
-
-Basta dar um duplo-clique no arquivo:
+### 1. Inicialização Rápida no Windows (1 Clique)
+Dê um duplo-clique no arquivo:
 ```bat
 dev.bat
 ```
-*O script verificará o ambiente, iniciará o servidor local e abrirá o navegador automaticamente em `http://localhost:5173`.*
+*(O script abrirá automaticamente o navegador em `http://localhost:5173`).*
 
-### Opção 2: Pelo Terminal (Linux / macOS / Windows)
-
-```bash
-# Instalação das dependências do empacotador
-npm install
-
-# Inicialização do servidor de desenvolvimento
-npm run dev
+### 2. Execução dos Testes Unitários
+Para rodar a bateria de testes de validação matemática:
+```bat
+test.bat
+# ou no terminal:
+node test_suite.js
 ```
 
-### Opção 3: Modo Direto (Sem instalação alguma)
-
-Como a aplicação é construída em **HTML, CSS e JavaScript puros**, você pode simplesmente:
-1. Abrir a pasta `public/`.
-2. Dar duplo-clique no arquivo `index.html`.
-3. O simulador funcionará completamente offline no seu navegador padrão.
+### 3. Modo Direto (Sem Instalações)
+Abra a pasta `public/` e dê um duplo-clique em `index.html` para abrir diretamente no navegador padrão.
 
 ---
 
 ## ☁️ Acesso Online
 
-O projeto está configurado para deploy contínuo na Vercel e pode ser acessado publicamente em:
+O projeto está publicado em:
 👉 **[https://kinetics-lab-nine.vercel.app](https://kinetics-lab-nine.vercel.app)**

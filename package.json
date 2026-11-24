@@ -1,13 +1,14 @@
 {
   "name": "kinetics-lab",
   "private": true,
-  "version": "1.0.0",
+  "version": "2.0.0",
   "type": "module",
-  "description": "Desenvolvimento de um Simulador Computacional para Determinação da Lei de Velocidade e da Constante Cinética pelo Método das Velocidades Iniciais",
+  "description": "Kinetics Lab — Laboratório Virtual de Análise Cinética Experimental",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node test_suite.js"
   },
   "devDependencies": {
     "vite": "^8.0.5"

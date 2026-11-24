@@ -1,5 +1,6 @@
-#!/usr/bin/env sh
-set -eu
-mkdir -p build/classes
-javac --add-modules jdk.httpserver -d build/classes src/*.java
-java --add-modules jdk.httpserver -cp build/classes ValidationTests
+#!/bin/bash
+set -e
+echo "=================================================="
+echo "Executando Bateria de Testes Cientificos"
+echo "=================================================="
+node test_suite.js
