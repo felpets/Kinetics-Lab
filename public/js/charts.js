@@ -35,7 +35,7 @@ window.KineticsCharts = (() => {
     ctx.scale(dpr, dpr);
 
     const padding = {
-      l: 76,
+      l: 86, // Aumentado para 86px para garantir folga total contra sobreposição do título do eixo Y
       r: 24,
       t: 28,
       b: 46,
@@ -204,8 +204,10 @@ window.KineticsCharts = (() => {
       yTitle: `Concentração [${pName}] (${concUnit})`
     });
 
-    const toX = (t) => p.l + ((t - xMin) / (xMax - xMin)) * pw;
-    const toY = (c) => h - p.b - ((c - yMin) / (yMax - yMin)) * ph;
+    const xSpan = (xMax - xMin) || 1;
+    const ySpan = (yMax - yMin) || 1;
+    const toX = (t) => p.l + ((t - xMin) / xSpan) * pw;
+    const toY = (c) => h - p.b - ((c - yMin) / ySpan) * ph;
 
     // Curva contínua interpolada (Spline)
     if (data.spline) {
@@ -334,6 +336,67 @@ window.KineticsCharts = (() => {
     });
   }
 
+  // Interpolação cúbica monótona para curva contínua de velocidade instantânea passando exatamente pelos nós (ti, vi)
+  function createRateSpline(ratePoints) {
+    const n = ratePoints.length;
+    if (n < 2) return (t) => (ratePoints[0] ? ratePoints[0].vReaction : 0);
+
+    const x = ratePoints.map(r => r.t);
+    const y = ratePoints.map(r => r.vReaction);
+
+    const deltas = [];
+    for (let i = 0; i < n - 1; i++) {
+      const dx = x[i + 1] - x[i];
+      deltas.push(dx !== 0 ? (y[i + 1] - y[i]) / dx : 0);
+    }
+
+    const m = new Array(n).fill(0);
+    m[0] = deltas[0];
+    for (let i = 1; i < n - 1; i++) {
+      m[i] = (deltas[i - 1] + deltas[i]) / 2;
+    }
+    m[n - 1] = deltas[n - 2];
+
+    // Preservação de monotonicidade (Fritsch-Carlson) para eliminar oscilações espúrias
+    for (let i = 0; i < n - 1; i++) {
+      if (Math.abs(deltas[i]) < 1e-12) {
+        m[i] = 0;
+        m[i + 1] = 0;
+      } else {
+        const alpha = m[i] / deltas[i];
+        const beta = m[i + 1] / deltas[i];
+        const dist = Math.hypot(alpha, beta);
+        if (dist > 3) {
+          const tau = 3 / dist;
+          m[i] = tau * alpha * deltas[i];
+          m[i + 1] = tau * beta * deltas[i];
+        }
+      }
+    }
+
+    return function evaluateRate(tTarget) {
+      if (tTarget <= x[0]) return y[0];
+      if (tTarget >= x[n - 1]) return y[n - 1];
+
+      let i = 0;
+      while (i < n - 2 && tTarget > x[i + 1]) i++;
+
+      const h = x[i + 1] - x[i];
+      if (h <= 0) return y[i];
+
+      const t = (tTarget - x[i]) / h;
+      const t2 = t * t;
+      const t3 = t2 * t;
+
+      const h00 = 2 * t3 - 3 * t2 + 1;
+      const h10 = t3 - 2 * t2 + t;
+      const h01 = -2 * t3 + 3 * t2;
+      const h11 = t3 - t2;
+
+      return h00 * y[i] + h10 * h * m[i] + h01 * y[i + 1] + h11 * h * m[i + 1];
+    };
+  }
+
   // =========================================================================
   // GRÁFICO 3: Velocidade Instantânea × Tempo (Diferenciação Numérica)
   // =========================================================================
@@ -361,15 +424,16 @@ window.KineticsCharts = (() => {
     const toX = (t) => p.l + (t / xMax) * pw;
     const toY = (v) => h - p.b - ((v - yMin) / (yMax - yMin)) * ph;
 
-    // Curva suave de velocidade instantânea se spline disponível
-    if (data.spline && data.nu) {
+    // Curva suave de velocidade instantânea passando EXATAMENTE por todas as bolinhas (ti, vi)
+    if (rates.length >= 2) {
+      const vSpline = createRateSpline(rates);
       ctx.strokeStyle = palette.green;
-      ctx.lineWidth = 2.2;
+      ctx.lineWidth = 2.4;
       ctx.beginPath();
-      const steps = 100;
+      const steps = 140;
       for (let i = 0; i <= steps; i++) {
         const tVal = (xMax * i) / steps;
-        const vVal = (1 / data.nu) * data.spline(tVal).deriv;
+        const vVal = vSpline(tVal);
         const px = toX(tVal);
         const py = toY(vVal);
         if (i === 0) ctx.moveTo(px, py);
@@ -378,7 +442,7 @@ window.KineticsCharts = (() => {
       ctx.stroke();
     }
 
-    // Pontos discretos calculados por diferenças finitas
+    // Pontos discretos calculados por diferenças finitas (perfeitamente alinhados à curva)
     const pointTargets = [];
     rates.forEach(r => {
       const cx = toX(r.t);
@@ -398,6 +462,12 @@ window.KineticsCharts = (() => {
         html: `<strong>Instante: ${r.t} ${timeUnit}</strong><br>v_inst: ${r.vReaction.toFixed(6)} ${rateUnit}<br><small>${r.method}</small>`
       });
     });
+
+    // Legenda no topo
+    ctx.textAlign = "right";
+    ctx.font = "10px Inter, sans-serif";
+    ctx.fillStyle = palette.text;
+    ctx.fillText(`● Pontos por Diferenças Finitas   ― Curva Suave v(t)`, w - p.r, p.t - 10);
 
     attachTooltip(canvas, (mx, my) => {
       return pointTargets.find(pt => Math.hypot(pt.x - mx, pt.y - my) <= 12);
@@ -591,8 +661,10 @@ window.KineticsCharts = (() => {
       yTitle: `Concentração [${pName}] (${concUnit})`
     });
 
-    const toX = (t) => p.l + ((t - xMin) / (xMax - xMin)) * pw;
-    const toY = (c) => h - p.b - ((c - yMin) / (yMax - yMin)) * ph;
+    const xSpan = (xMax - xMin) || 1;
+    const ySpan = (yMax - yMin) || 1;
+    const toX = (t) => p.l + ((t - xMin) / xSpan) * pw;
+    const toY = (c) => h - p.b - ((c - yMin) / ySpan) * ph;
 
     // Curva contínua do produto [P](t)
     if (data.spline) {

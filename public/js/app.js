@@ -325,10 +325,12 @@
 
     slider.min = tMin;
     slider.max = tMax;
-    slider.step = ((tMax - tMin) / 100).toFixed(2);
+    const span = tMax - tMin;
+    const stepVal = span > 0 ? Math.max(0.01, span / 200) : 0.1;
+    slider.step = stepVal < 1 ? stepVal.toFixed(2) : stepVal.toFixed(1);
 
-    if (state.selectedTangentTime < tMin || state.selectedTangentTime > tMax) {
-      state.selectedTangentTime = (tMin + tMax) / 2;
+    if (state.selectedTangentTime === undefined || state.selectedTangentTime === null || isNaN(state.selectedTangentTime) || state.selectedTangentTime < tMin || state.selectedTangentTime > tMax) {
+      state.selectedTangentTime = tMin + span * 0.4;
     }
     slider.value = state.selectedTangentTime;
   }
@@ -675,13 +677,63 @@
       });
     }
 
-    // Slider da reta tangente interativa
+    // Slider da reta tangente interativa (sincronização contínua com input, change e teclado)
     const tangentSlider = document.querySelector("#tangentTimeSlider");
     if (tangentSlider) {
-      tangentSlider.addEventListener("input", (e) => {
-        state.selectedTangentTime = parseFloat(e.target.value);
+      const updateFromSlider = (e) => {
+        const val = parseFloat(e.target.value);
+        if (Number.isFinite(val)) {
+          state.selectedTangentTime = val;
+          renderInteractiveTangent();
+        }
+      };
+      tangentSlider.addEventListener("input", updateFromSlider);
+      tangentSlider.addEventListener("change", updateFromSlider);
+    }
+
+    // Interatividade direta no próprio Canvas da Tangente (clicar ou arrastar sobre o gráfico move a reta)
+    const tangentCanvas = document.querySelector("#tangentCanvas");
+    if (tangentCanvas) {
+      tangentCanvas.style.cursor = "crosshair";
+      let isDraggingTangent = false;
+
+      const handleTangentPointer = (e) => {
+        if (!state.analysis || !state.analysis.activePoints || state.analysis.activePoints.length === 0) return;
+        const pts = state.analysis.activePoints;
+        const tMin = pts[0].t;
+        const tMax = pts[pts.length - 1].t;
+        const rect = tangentCanvas.getBoundingClientRect();
+        const pLeft = 86; // padding esquerdo
+        const pRight = 24; // padding direito
+        const pw = rect.width - pLeft - pRight;
+        if (pw <= 0) return;
+
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const mouseX = clientX - rect.left;
+        const frac = Math.max(0, Math.min(1, (mouseX - pLeft) / pw));
+        const newT = tMin + frac * (tMax - tMin);
+
+        state.selectedTangentTime = newT;
+        if (tangentSlider) tangentSlider.value = newT;
         renderInteractiveTangent();
+      };
+
+      tangentCanvas.addEventListener("mousedown", (e) => {
+        isDraggingTangent = true;
+        handleTangentPointer(e);
       });
+      window.addEventListener("mousemove", (e) => {
+        if (isDraggingTangent) handleTangentPointer(e);
+      });
+      window.addEventListener("mouseup", () => {
+        isDraggingTangent = false;
+      });
+      tangentCanvas.addEventListener("touchstart", (e) => {
+        handleTangentPointer(e);
+      }, { passive: true });
+      tangentCanvas.addEventListener("touchmove", (e) => {
+        handleTangentPointer(e);
+      }, { passive: true });
     }
 
     // Botões de alternância de modelo cinético (Ordem 0, 1 e 2)
