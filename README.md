@@ -4,7 +4,7 @@
 
 Veja como calcular a velocidade de uma reação a partir de medições de tempo e concentração do produto. Com vários ensaios, você também pode investigar como a concentração inicial dos reagentes afeta a velocidade.
 
-**[Abrir o laboratório](https://kinetics-lab-nine.vercel.app/)** · [Rodar no computador](#rodar-no-computador) · [Executar os testes](#executar-os-testes)
+**[Abrir o laboratório](https://kinetics-lab-nine.vercel.app/)** · [Rodar no computador](#rodar-no-computador) · 
 
 ## Seu primeiro ensaio
 
@@ -70,19 +70,7 @@ Você também pode instalar as dependências e iniciar o servidor diretamente pe
 npm ci
 npm run dev
 ```
-
-## Executar os testes
-
-Na pasta do projeto, escolha um dos comandos abaixo. A suíte roda com Node.js e testa o motor de cálculo.
-
-| Ambiente | Comando |
-| --- | --- |
-| Windows no PowerShell | `.\test.bat` |
-| Linux ou macOS | `bash ./test.sh` |
-| Com npm | `npm test` |
-| Com Node.js | `node test_suite.js` |
-
-Os comandos rodam a mesma suíte, que verifica a importação dos dados, as velocidades, a tangente, os intervalos de tempo irregulares e o ajuste da lei de velocidade. Se uma verificação falhar, o comando informa o erro e retorna um código de saída diferente de zero. Quando todos os testes passam, o `test.bat` espera você pressionar uma tecla antes de terminar. [Código da suíte](test_suite.js)
+)
 
 ## Confira um resultado de exemplo
 
