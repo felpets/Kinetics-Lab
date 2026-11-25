@@ -1,40 +1,97 @@
-# Kinetics Lab — Laboratório Virtual de Análise Cinética Experimental
+# Kinetics Lab
+
+*Laboratório virtual de análise cinética experimental*
 
 > *Projeto Acadêmico para minha Noiva*
 
-[Aplicação publicada na Vercel](https://kinetics-lab-nine.vercel.app/)
+Veja como calcular a velocidade de uma reação a partir de medições de tempo e concentração do produto. Com vários ensaios, você também pode investigar como a concentração inicial dos reagentes afeta a velocidade.
 
-O Kinetics Lab determina a velocidade de uma reação a partir de medições da concentração de um produto ao longo do tempo. Ele usa as velocidades iniciais de vários ensaios para estimar as ordens parciais, a ordem global e a constante cinética.
+**[Abrir o laboratório](https://kinetics-lab-nine.vercel.app/)** · [Rodar no computador](#rodar-no-computador) · [Executar os testes](#executar-os-testes)
 
-Use o botão **Primeiro acesso**, na barra superior, para abrir o tour. O guia apresenta a determinação experimental, a lei de velocidade, a fundamentação teórica e os relatórios. Em cada tela, clique em **Próximo** para avançar. Nas trocas de tela, clique na opção destacada no menu. Os dados da demonstração são temporários.
+## Seu primeiro ensaio
 
-## Determinação Experimental da Velocidade
+1. Clique em **Primeiro acesso** para ver o laboratório preencher uma tabela com dados simulados.
+2. Use **Próximo** para ler as explicações sobre as tabelas, os gráficos e as fórmulas no seu ritmo. Nas trocas de tela, clique na aba destacada no menu.
+3. Quando quiser usar suas medições, vá em **Determinação experimental** e clique em **Novo ensaio**.
 
-1. Crie um ensaio, identifique o produto e informe seu coeficiente estequiométrico ν.
-2. Insira os pares de tempo e concentração na tabela, cole duas colunas de uma planilha ou importe um CSV. O CSV pode ter cabeçalho. Use ponto e vírgula ou tabulação com vírgula decimal, ou use vírgula como delimitador com ponto decimal.
-3. Confira as unidades do ensaio. A aplicação aceita segundos, minutos ou horas e mol/L, mmol/L ou mol/m³.
-4. Compare as tabelas e os gráficos de concentração × tempo, velocidade média × tempo, velocidade instantânea × tempo e velocidade instantânea × concentração. Escolha um instante na tangente interativa ou abra a memória de cálculo para ver as substituições.
+Os dados do tour são temporários. Seus ensaios cadastrados ficam salvos no navegador.
 
-A média por intervalo é v̄ = (1/ν) × Δ[P]/Δt. Cada valor é posicionado no tempo médio do intervalo. A média global usa os extremos da série, inclusive quando os intervalos têm durações diferentes.
+| Tela | O que você pode fazer |
+| --- | --- |
+| **Determinação experimental** | Registre as medições, consulte as velocidades média e instantânea e explore a reta tangente e a memória de cálculo. Use **PNG** nos gráficos que oferecem essa opção. |
+| **Lei de velocidade** | Compare ensaios para estimar as ordens da reação e a constante cinética k. |
+| **Fundamentação teórica** | Consulte as fórmulas e entenda como o laboratório calcula os resultados. |
+| **Relatórios** | Baixe as medições e as velocidades em CSV ou salve em PDF o relatório do ensaio e do ajuste ativo. |
 
-A velocidade instantânea é v(t) = (1/ν) × d[P]/dt. Com três ou mais pontos, o motor diferencia o polinômio de Lagrange local de três amostras, usando os intervalos reais. Isso produz a diferença central nos pontos internos e diferenças unilaterais nas extremidades. Com dois pontos, o motor usa a inclinação secante. A tangente usa a curva de Hermite, cuja inclinação coincide com as diferenças finitas nos pontos medidos.
+### Como inserir seus dados
 
-A velocidade inicial estimada para o ajuste é a média do primeiro intervalo quando a série começa em t = 0. A tabela de velocidades instantâneas também informa a derivada no primeiro ponto. A estimativa por secante é mais representativa quando o primeiro intervalo é curto.
+Dê um nome ao ensaio, identifique o produto e informe seu coeficiente na equação balanceada (ν). Escolha a unidade de tempo (s, min ou h) e de concentração do produto (mol/L, mmol/L ou mol/m³).
 
-## Determinação da Lei de Velocidade
+Insira pelo menos dois pares de tempo e concentração, com tempos distintos. Você pode digitar na tabela, colar duas colunas de uma planilha ou importar um CSV. A primeira coluna é o tempo e a segunda é a concentração. O cabeçalho é opcional.
 
-Cadastre os reagentes na seção **Lei de velocidade**. Para cada ensaio da mesma reação, preencha as concentrações iniciais dos reagentes em mol/L e insira a série do produto. Os ensaios ficam salvos neste navegador.
+```csv
+tempo;concentracao
+0;0,000
+10;0,120
+20;0,210
+```
 
-A aplicação normaliza v₀ para mol·L⁻¹·s⁻¹ e ajusta ln(v₀) = ln(k) + Σ nⱼ ln([Rⱼ]₀). A regressão usa QR de Householder com pivotamento e verifica o posto e o condicionamento. São necessários pelo menos p + 1 ensaios válidos para p reagentes. Concentrações iniciais e velocidades iniciais precisam ser positivas. Variações independentes nas concentrações ajudam a identificar as ordens. Ensaios adicionais fornecem graus de liberdade para avaliar os resíduos.
+Com vírgula decimal, separe as colunas por ponto e vírgula ou tabulação. Com ponto decimal, você também pode usar vírgula para separar as colunas.
 
-A ordem global n é a soma das ordens parciais. A constante é k = exp(intercepto), com unidade (mol/L)^(1 − n) · s⁻¹.
+### Como ajustar a lei de velocidade
 
-Os exemplos de referência e de regressão são simulados. Selecione **Exemplos simulados** para ajustar esse conjunto. A seção **Relatórios** permite exportar a série e as velocidades em CSV ou imprimir o relatório em PDF.
+1. Cadastre os reagentes na aba **Lei de velocidade**.
+2. Para cada ensaio da mesma reação, preencha as concentrações iniciais dos reagentes em mol/L e informe a série do produto. A série deve começar em t = 0. As concentrações iniciais e a velocidade inicial estimada precisam ser positivas.
+3. Para p reagentes, reúna pelo menos p + 1 ensaios válidos e varie suas concentrações iniciais de forma independente. Ensaios adicionais permitem avaliar os resíduos do ajuste.
+4. Volte à aba **Lei de velocidade**. A tabela indica quais ensaios entraram no cálculo e compara as velocidades iniciais estimadas e ajustadas. O resumo mostra as ordens, a constante k e sua unidade. O gráfico sobrepõe as séries temporais dos ensaios usados.
 
-## Caso de referência simulado
+Para experimentar o ajuste, clique em **Carregar conjunto simulado para regressão** na tela experimental e escolha **Exemplos simulados** na aba **Lei de velocidade**.
+
+## Rodar no computador
+
+Abra o terminal na pasta que contém o `package.json`. Para iniciar o Vite, use npm e uma versão compatível do Node.js, como Node.js 20.19.0 ou posterior na série 20, ou Node.js a partir da versão 22.12.0.
+
+**Windows** · Use o PowerShell.
+
+```powershell
+.\run.bat
+```
+
+**Linux ou macOS** · Na primeira vez, dê permissão aos dois scripts. Depois, use `./run.sh` para abrir o laboratório.
+
+```bash
+chmod +x run.sh dev.sh
+./run.sh
+```
+
+Os scripts `run` chamam o `dev` do seu sistema, instalam as dependências se a pasta `node_modules` estiver ausente e abrem o laboratório no navegador. O endereço aparece no terminal, normalmente `http://localhost:5173/`. Use **Ctrl+C** para encerrar o servidor.
+
+Você também pode instalar as dependências e iniciar o servidor diretamente pelo npm. Abra no navegador o endereço que aparecer no terminal.
+
+```sh
+npm ci
+npm run dev
+```
+
+## Executar os testes
+
+Na pasta do projeto, escolha um dos comandos abaixo. A suíte roda com Node.js e testa o motor de cálculo.
+
+| Ambiente | Comando |
+| --- | --- |
+| Windows no PowerShell | `.\test.bat` |
+| Linux ou macOS | `bash ./test.sh` |
+| Com npm | `npm test` |
+| Com Node.js | `node test_suite.js` |
+
+Os comandos rodam a mesma suíte, que verifica a importação dos dados, as velocidades, a tangente, os intervalos de tempo irregulares e o ajuste da lei de velocidade. Se uma verificação falhar, o comando informa o erro e retorna um código de saída diferente de zero. Quando todos os testes passam, o `test.bat` espera você pressionar uma tecla antes de terminar. [Código da suíte](test_suite.js)
+
+## Confira um resultado de exemplo
+
+Na tela experimental, use **Carregar exemplo simulado de referência** para preencher a série abaixo, com ν = 1.
 
 | Tempo (s) | Concentração (mol/L) |
-|---:|---:|
+| ---: | ---: |
 | 0 | 0,000 |
 | 10 | 0,120 |
 | 20 | 0,210 |
@@ -42,17 +99,26 @@ Os exemplos de referência e de regressão são simulados. Selecione **Exemplos 
 | 40 | 0,350 |
 | 50 | 0,400 |
 
-Para ν = 1, as médias são 0,012, 0,009, 0,008, 0,006 e 0,005 mol/(L·s). A média global é 0,008 mol/(L·s). A diferença central em 10 s fornece 0,0105 mol/(L·s).
+Os resultados esperados são **0,012 mol/(L·s)** para a velocidade inicial estimada, **0,008 mol/(L·s)** para a média global e **0,0105 mol/(L·s)** para a velocidade instantânea em 10 s. As médias dos cinco intervalos são 0,012, 0,009, 0,008, 0,006 e 0,005 mol/(L·s).
 
-## Desenvolvimento
+## Como os cálculos funcionam
 
-A aplicação usa HTML, CSS, JavaScript e Canvas, com compilação estática pelo Vite.
+- **Velocidade média.** O laboratório divide a variação de concentração Δ[P] pelo tempo Δt e pelo coeficiente ν. O gráfico coloca cada média no ponto médio do intervalo. A média global usa o primeiro e o último ponto da série, inclusive quando os intervalos têm durações diferentes.
+- **Velocidade instantânea.** O motor estima a derivada d[P]/dt e divide por ν. Com três ou mais amostras, ele diferencia um polinômio local de Lagrange de três pontos, usando os tempos reais. Com duas amostras, usa a inclinação da secante. A curva usada na tangente é interpolada pelo método cúbico de Hermite. Sua inclinação coincide com as derivadas estimadas nos pontos medidos.
+- **Velocidade inicial.** Quando a série começa em t = 0, v₀ é estimada pela média do primeiro intervalo. Um intervalo curto aproxima melhor a velocidade no início da reação. A tabela de velocidades instantâneas também mostra a estimativa por derivada no primeiro ponto.
+- **Lei de velocidade.** O laboratório normaliza v₀ para mol·L⁻¹·s⁻¹ e ajusta ln(v₀) = ln(k) + Σ nⱼ ln([Rⱼ]₀) por QR de Householder com pivotamento. O motor verifica o posto e o condicionamento do ajuste. A ordem global n é a soma das ordens parciais. A constante k é a exponencial do intercepto e tem unidade (mol/L)^(1 − n) · s⁻¹.
+
+## Para mexer no código
+
+O laboratório usa HTML, CSS, JavaScript e Canvas. Depois de instalar as dependências com `npm ci`, use os comandos abaixo para gerar o site estático em `dist/` e abrir uma prévia local.
 
 ```sh
-npm ci
-npm run dev
-npm test
 npm run build
+npm run preview
 ```
 
-A suíte em `test_suite.js` verifica a série de referência, os formatos CSV, a diferenciação em malhas não uniformes e a regressão sobre ensaios simulados com parâmetros conhecidos.
+- Interface e navegação. [index.html](index.html) e [app.js](public/js/app.js)
+- Estilos. [styles.css](public/css/styles.css)
+- Validação, velocidades e regressão. [kinetics-engine.js](public/js/kinetics-engine.js)
+- Gráficos em Canvas e exportação de imagens. [charts.js](public/js/charts.js)
+- Comandos e configuração do Vite. [package.json](package.json) e [vite.config.ts](vite.config.ts)
