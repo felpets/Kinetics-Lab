@@ -2,8 +2,6 @@
 
 *Laboratório virtual de análise cinética experimental*
 
-> *Projeto Acadêmico para minha Noiva*
-
 Veja como calcular a velocidade de uma reação a partir de medições de tempo e concentração do produto. Com vários ensaios, você também pode investigar como a concentração inicial dos reagentes afeta a velocidade.
 
 **[Abrir o laboratório](https://kinetics-lab-nine.vercel.app/)** · [Rodar no computador](#rodar-no-computador) · [Executar os testes](#executar-os-testes)
