@@ -70,7 +70,7 @@ Você também pode instalar as dependências e iniciar o servidor diretamente pe
 npm ci
 npm run dev
 ```
-)
+
 
 ## Confira um resultado de exemplo
 
